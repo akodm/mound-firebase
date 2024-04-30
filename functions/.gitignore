@@ -1,0 +1,12 @@
+# Compiled JavaScript files
+lib/**/*.js
+lib/**/*.js.map
+
+# TypeScript v1 declaration files
+typings/
+
+# Node.js dependency directory
+node_modules/
+
+# Security
+mound-ad8f1-firebase-adminsdk-ldcob-4f39e87030.json
