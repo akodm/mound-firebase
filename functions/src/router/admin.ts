@@ -2,11 +2,11 @@ import express from "express";
 
 const router = express.Router();
 
-router.get("/ping", (req, res, next) => {
+router.get("/", (req, res, next) => {
   try {
     return res.status(200).send({
       result: true,
-      message: "ping",
+      message: "",
       data: null,
     });
   } catch (err) {

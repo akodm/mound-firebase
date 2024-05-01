@@ -17,6 +17,14 @@ export declare namespace OpenAPITypes {
     result: LocationChild[];
   }
 
+  interface LocationParse {
+    latitude: string;
+    longitude: string;
+    location: string;
+    address: string;
+    code: string;
+  }
+
   interface AuthParams {
     consumer_key: string;
     consumer_secret: string;

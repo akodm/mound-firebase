@@ -1,4 +1,6 @@
-export const eupMyeonDong = [
+import { OpenAPITypes } from "../@types/types";
+
+export const eupMyeonDong: OpenAPITypes.LocationParse[] = [
   {
     "latitude": "1710800",
     "longitude": "925663",
