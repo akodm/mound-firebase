@@ -1,9 +1,9 @@
+import dotenv from "dotenv";
+dotenv.config();
 import { onRequest } from "firebase-functions/v2/https";
 import { initializeApp } from "firebase-admin/app";
 import * as logger from "firebase-functions/logger";
 import express, { NextFunction, Request, Response } from "express";
-import swaggerUI from "swagger-ui-express";
-import swaggerJSDoc from "swagger-jsdoc";
 import morgan from "morgan";
 import helmet from "helmet";
 import moment from "moment";
@@ -14,23 +14,7 @@ import indexRouter from "./router";
 
 const {
   NODE_ENV,
-  SWAGGER_EMAIL,
 } = process.env;
-
-const swaggerSpec = swaggerJSDoc({
-  definition: {
-    info: {
-      title: "Mound API Docs",
-      description: "Mound API CURD Document",
-      version: "3.0.0",
-      contact: {
-        name: "Developer Email",
-        email: SWAGGER_EMAIL,
-      },
-    },
-  },
-  apis: ["src/routes/*.ts"],
-})
 
 const app = express();
 
@@ -42,14 +26,9 @@ app.use(express.urlencoded({ extended: false }));
 initializeApp();
 
 app.use("/", indexRouter);
-NODE_ENV === "development" && app.use(
-  "/api-docs",
-  swaggerUI.serve,
-  swaggerUI.setup(swaggerSpec, { explorer: true }),
-);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  console.log(req.url);
+  logger.info(`REQUEST URL: ${req.url}`, { structuredData: true });
   next({ s: 404, m: "존재하지 않는 주소입니다." });
 });
 
