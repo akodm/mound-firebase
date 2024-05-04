@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import { getAuth } from "firebase-admin/auth";
 
 const { ACCESS_KEY, REFRESH_KEY } = process.env;
 
@@ -25,11 +24,3 @@ export const refreshVerify = (string: string, options: jwt.VerifyOptions): strin
   }
 };
 
-// SMS 인증된 사용자인지 확인
-export const phoneVerify = async (number: string) => {
-  try {
-    return await getAuth().getUserByPhoneNumber(number); 
-  } catch (err) {
-    throw err;
-  }
-};
