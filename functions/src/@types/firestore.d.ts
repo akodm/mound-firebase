@@ -30,6 +30,7 @@ export declare namespace MoundFirestore {
   }
 
   interface Token extends DateConstructor {
+    device: string;
     access: string;
     accessExpire: string;
     refresh: string;

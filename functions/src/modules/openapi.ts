@@ -10,6 +10,7 @@ const {
 } = process.env;
 
 /**
+ * 지역 정보 조회
  * CODE
  * ---- 시 코드
  * 11, 21, 22, 23, 24, 25, 26, 29, 31, 32, 33, 34, 35, 36, 37, 38, 39
@@ -34,6 +35,7 @@ export const locationAPI = async ({ accessToken, cd }: OpenAPITypes.LocationPara
   }
 };
 
+// 토큰 재발급
 export const authAPI = async (): Promise<OpenAPITypes.AuthResult> => {
   try {
     const query = {
