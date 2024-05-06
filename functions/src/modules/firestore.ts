@@ -1,7 +1,7 @@
 import { AppOptions, cert, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
-const { NODE_ENV } = process.env;
+const { NODE_ENV, } = process.env;
 
 const options: AppOptions = {};
 
@@ -14,4 +14,6 @@ initializeApp();
 
 const db = getFirestore();
 
-export default (): FirebaseFirestore.Firestore => db;
+const getDb = () => db;
+
+export default getDb();

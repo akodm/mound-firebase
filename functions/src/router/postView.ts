@@ -8,6 +8,7 @@ router.get("/", (req, res, next) => {
       result: true,
       message: "",
       data: null,
+      code: null,
     });
   } catch (err) {
     return next(err);

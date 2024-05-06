@@ -9,6 +9,7 @@ import moment from "moment";
 import "moment/locale/ko";
 moment.locale("ko");
 
+import testRouter from "./router/test";
 import indexRouter from "./router";
 import adminRouter from "./router/admin";
 import userRouter from "./router/user";
@@ -36,6 +37,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Express 내 라우팅 처리
+NODE_ENV === "development" && app.use("/test", testRouter);
 app.use("/", indexRouter);
 app.use(`/${ADMIN_URL}`, adminRouter);
 app.use("/user", userRouter);
@@ -56,13 +58,14 @@ app.use("/commentLike", commentLikeRouter);
 app.use((req: Request, res: Response, next: NextFunction) => {
   logger.info(`REQUEST URL: ${req.url}`, { structuredData: true });
 
-  next({ s: 404, m: "존재하지 않는 주소입니다." });
+  return next({ s: 404, m: "존재하지 않는 주소입니다." });
 });
 
 // API 실패 시
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const status = err.s || err.status || 500;
   const message = err.m || "문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
+  const code = err.c || null;
 
   console.error("CATCH ERROR:", err);
   logger.info(`CATCH ERROR: ${JSON.stringify(err, null, 2)}`, { structuredData: true });
@@ -71,6 +74,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     result: false,
     message: message,
     data: null,
+    code,
   });
 });
 

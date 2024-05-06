@@ -8,6 +8,7 @@ router.get("/ping", (req, res, next) => {
       result: true,
       message: "ping",
       data: null,
+      code: null,
     });
   } catch (err) {
     return next(err);

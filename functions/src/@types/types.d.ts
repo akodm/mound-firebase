@@ -1,3 +1,5 @@
+import { Request } from "express";
+
 export declare namespace OpenAPITypes {
   interface LocationParams {
     accessToken: string;
@@ -39,5 +41,11 @@ export declare namespace OpenAPITypes {
     errMsg: string;
     errCd: number;
     trId: string;
+  }
+}
+
+export declare namespace TokenTypes {
+  interface Payload {
+    id: string;
   }
 }

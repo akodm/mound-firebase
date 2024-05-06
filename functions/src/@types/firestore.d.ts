@@ -16,13 +16,14 @@ export declare namespace MoundFirestore {
 
   interface User extends DateConstructor {
     id: string;
+    uid: string;
     account: string;
     password: string;
     phone: string;
     verify: boolean;
     termsToService: boolean;
     block: boolean;
-    blockExpire: string;
+    blockExpire: string | null;
     notice: boolean;
     comment: boolean;
     like: boolean;
