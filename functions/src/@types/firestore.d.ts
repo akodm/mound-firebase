@@ -1,5 +1,6 @@
 export declare namespace MoundFirestore {
-  interface DateConstructor {
+  interface Constructor {
+    id: string;
     createdAt: string;
     updatedAt: string;
   }
@@ -14,8 +15,7 @@ export declare namespace MoundFirestore {
     longitude: string;
   }
 
-  interface User extends DateConstructor {
-    id: string;
+  interface User extends Constructor {
     uid: string;
     account: string;
     password: string;
@@ -30,7 +30,7 @@ export declare namespace MoundFirestore {
     marketing: boolean;
   }
 
-  interface Token extends DateConstructor {
+  interface Token extends Constructor {
     device: string;
     access: string;
     accessExpire: string;
@@ -39,7 +39,7 @@ export declare namespace MoundFirestore {
     userId: string;
   }
 
-  interface Report extends DateConstructor {
+  interface Report extends Constructor {
     text: string;
     reportType: string;
     userId: string;
@@ -48,14 +48,14 @@ export declare namespace MoundFirestore {
     commentReplyId?: string;
   }
 
-  interface Notice extends DateConstructor {
+  interface Notice extends Constructor {
     title: string;
     content: string;
     read: boolean;
     userId: string;
   }
 
-  interface Notification extends DateConstructor {
+  interface Notification extends Constructor {
     title: string;
     content: string;
     data?: string;
@@ -64,11 +64,11 @@ export declare namespace MoundFirestore {
     userId: string;
   }
 
-  interface PlaceSubscription extends DateConstructor, PlaceStructor {
+  interface PlaceSubscription extends Constructor, PlaceStructor {
     userId: string;
   }
 
-  interface Post extends DateConstructor, PlaceStructor {
+  interface Post extends Constructor, PlaceStructor {
     title: string;
     content: string;
     exactly: boolean;
@@ -80,17 +80,17 @@ export declare namespace MoundFirestore {
     userId: string;
   }
 
-  interface PostView extends DateConstructor {
+  interface PostView extends Constructor {
     postId: string;
     userId: string;
   }
 
-  interface PostLike extends DateConstructor {
+  interface PostLike extends Constructor {
     postId: string;
     userId: string;
   }
 
-  interface PostMedia extends DateConstructor {
+  interface PostMedia extends Constructor {
     name: string;
     url: string;
     mimetype: string;
@@ -99,7 +99,7 @@ export declare namespace MoundFirestore {
     userId: string;
   }
 
-  interface PostComment extends DateConstructor {
+  interface PostComment extends Constructor {
     text: string;
     likeCount: number;
     replyCount: number;
@@ -109,7 +109,7 @@ export declare namespace MoundFirestore {
     userId: string;
   }
 
-  interface CommentReply extends DateConstructor {
+  interface CommentReply extends Constructor {
     text: string;
     likeCount: number;
     reportCount: number;
@@ -119,7 +119,7 @@ export declare namespace MoundFirestore {
     userId: string;
   }
 
-  interface CommentLike extends DateConstructor {
+  interface CommentLike extends Constructor {
     postCommentId: string;
     userId: string;
   }

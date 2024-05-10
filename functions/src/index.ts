@@ -56,7 +56,7 @@ app.use("/commentLike", commentLikeRouter);
 
 // 잘못된 주소 접근 시
 app.use((req: Request, res: Response, next: NextFunction) => {
-  logger.info(`REQUEST URL: ${req.url}`, { structuredData: true });
+  logger.info(`REQUEST URL: ${req.url}`);
 
   return next({ s: 404, m: "존재하지 않는 주소입니다." });
 });
@@ -68,7 +68,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const code = err.c || null;
 
   console.error("CATCH ERROR:", err);
-  logger.info(`CATCH ERROR: ${JSON.stringify(err, null, 2)}`, { structuredData: true });
+  logger.error({ status, message, code });
 
   return res.status(status).send({
     result: false,

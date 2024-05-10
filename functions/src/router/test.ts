@@ -21,9 +21,9 @@ router.get("/token/:id", async (req, res, next) => {
       message: "",
       data: {
         id,
-        access,
-        refresh,
       },
+      access,
+      refresh,
       code: null,
     });
   } catch (err) {
@@ -45,9 +45,9 @@ router.get("/token/authcentication/access", accessAuthentication, async (req, re
       message: "",
       data: {
         id,
-        access,
-        refresh,
       },
+      access,
+      refresh,
       code: null,
     });
   } catch (err) {
@@ -69,9 +69,9 @@ router.get("/token/authcentication/refresh", refreshAuthentication, async (req, 
       message: "",
       data: {
         id,
-        access,
-        refresh,
       },
+      access,
+      refresh,
       code: null,
     });
   } catch (err) {
