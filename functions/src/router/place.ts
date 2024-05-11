@@ -1,10 +1,11 @@
 import express from "express";
 
 import { getGeocode } from "../modules/place";
+import { TestKeyInclude } from "../utils/admin";
 
 const router = express.Router();
 
-router.get("/geocode", async (req, res, next) => {
+router.get("/geocode", TestKeyInclude, async (req, res, next) => {
   try {
     const { x, y } = req.query;
 
