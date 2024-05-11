@@ -5,5 +5,6 @@ export const ERROR_CODE = {
 };
 
 export const TOKEN_ERROR_CODE = {
-  INVALID_SIGNATURE: "invalid signature",
+  TOKEN_EXPIRED: "TokenExpiredError",
+  JSON_WEB_TOKEN: "JsonWebTokenError",
 };

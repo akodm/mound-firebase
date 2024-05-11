@@ -27,6 +27,11 @@ export declare namespace OpenAPITypes {
     code: string;
   }
 
+  interface GeocodeCoord {
+    x: number | string;
+    y: number | string;
+  }
+
   interface AuthParams {
     consumer_key: string;
     consumer_secret: string;
@@ -47,6 +52,11 @@ export declare namespace OpenAPITypes {
 export declare namespace TokenTypes {
   interface Payload {
     id: string;
+  }
+
+  interface Issue {
+    token: string;
+    expire: Date;
   }
 
   interface JwtObject extends Payload {

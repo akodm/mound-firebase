@@ -1,36 +1,15 @@
 import express from "express";
 import crypto from "crypto";
-import moment from "moment";
 
 import db from "../modules/firestore";
 import { ERROR_CODE } from "../consts/code";
 import { MoundFirestore } from "../@types/firestore";
 import { phoneDelete, phoneVerify } from "../modules/sms";
-import { accessAuthentication, accessIssue, refreshAuthentication, refreshIssue } from "../modules/token";
+import { accessAuthentication, accessIssue, refreshIssue } from "../modules/token";
 
 const { PASSWORD_HASH_ALGORITHM } = process.env;
 
 const router = express.Router();
-
-// 리프레시 토큰 인증
-router.get("/refresh", refreshAuthentication, async (req, res, next) => {
-  try {
-    const { id, access, refresh } = req.user;
-
-    return res.status(200).send({
-      result: true,
-      data: {
-        id,
-      },
-      message: "로그인에 성공하였습니다.",
-      access,
-      refresh,
-      code: null,
-    })
-  } catch (err) {
-    return next(err);
-  }
-});
 
 // 사용자 로그인
 router.post("/login", async (req, res, next) => {
@@ -58,8 +37,8 @@ router.post("/login", async (req, res, next) => {
 
     const [user] = userDocs.docs;
 
-    const access = accessIssue({ id: user.id });
-    const refresh = refreshIssue({ id: user.id });
+    const { token: access, expire: accessExpire } = accessIssue({ id: user.id });
+    const { token: refresh, expire: refreshExpire } = refreshIssue({ id: user.id });
 
     const tokenDocs = await db
       .collection("token")
@@ -75,9 +54,9 @@ router.post("/login", async (req, res, next) => {
     if (exist) {
       await exist.ref.update({
         access,
-        accessExpire: moment().add(3, "days").format("YYYY-MM-DD HH:mm:ss"),
+        accessExpire,
         refresh,
-        refreshExpire: moment().add(30, "days").format("YYYY-MM-DD HH:mm:ss"),
+        refreshExpire,
       });
     } else {
       await db
@@ -85,9 +64,9 @@ router.post("/login", async (req, res, next) => {
         .add({
           device,
           access,
-          accessExpire: moment().add(3, "days").format("YYYY-MM-DD HH:mm:ss"),
+          accessExpire,
           refresh,
-          refreshExpire: moment().add(30, "days").format("YYYY-MM-DD HH:mm:ss"),
+          refreshExpire,
           userId: user.id,
         });
     }
@@ -168,17 +147,17 @@ router.post("/", async (req, res, next) => {
       throw { s: 500, m: "사용자를 생성하지 못했습니다." };
     }
 
-    const access = accessIssue({ id: user.id });
-    const refresh = refreshIssue({ id: user.id });
+    const { token: access, expire: accessExpire } = accessIssue({ id: user.id });
+    const { token: refresh, expire: refreshExpire } = refreshIssue({ id: user.id });
 
     await db
       .collection("token")
       .add({
         device,
         access,
-        accessExpire: moment().add(3, "days").format("YYYY-MM-DD HH:mm:ss"),
+        accessExpire,
         refresh,
-        refreshExpire: moment().add(30, "days").format("YYYY-MM-DD HH:mm:ss"),
+        refreshExpire,
         userId: user.id,
       });
 

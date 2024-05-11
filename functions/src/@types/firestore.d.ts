@@ -1,8 +1,12 @@
 export declare namespace MoundFirestore {
+  interface DataJson {
+    [x: string]: any;
+  }
+
   interface Constructor {
     id: string;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: Date;
+    updatedAt: Date;
   }
 
   interface PlaceStructor {

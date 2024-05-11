@@ -13,9 +13,9 @@ export const expireValidation = (
   const parse = moment().isAfter(moment(date), granularity);
 
   if (near) {
-    const nearDate = moment().add(near, nearGranularity);
+    const nearDate = moment().subtract(near, nearGranularity);
 
-    return !nearDate.isAfter(moment(date), granularity);
+    return nearDate.isAfter(moment(date), granularity);
   } else {
     return parse;
   }

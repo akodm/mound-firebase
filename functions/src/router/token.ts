@@ -16,14 +16,14 @@ router.get("/authentication/refresh", refreshAuthentication, (req, res, next) =>
 
     return res.status(200).send({
       result: true,
-      message: "",
       data: {
         id,
-        access,
-        refresh,
       },
+      message: "로그인에 성공하였습니다.",
+      access,
+      refresh,
       code: null,
-    });
+    })
   } catch (err) {
     return next(err);
   }
