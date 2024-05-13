@@ -246,11 +246,9 @@ router.delete("/", accessAuthentication, async (req, res, next) => {
       .where("userId", "==", user.id)
       .get();
 
-    const tokenRefs = tokenDocs.docs.map((doc) => doc.ref);
-
     await db.runTransaction(async (tx) => {
       tx.delete(user.ref);
-      tokenRefs.forEach((ref) => tx.delete(ref));
+      tokenDocs.docs.forEach((doc) => tx.delete(doc.ref));
 
       await phoneDelete(uid);
     });
