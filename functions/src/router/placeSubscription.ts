@@ -95,7 +95,6 @@ router.put("/", accessAuthentication, async (req, res, next) => {
     const batch = db.batch();
 
     placeSubscription.docs.forEach((doc) => batch.delete(doc.ref));
-
     placeList.forEach((place) => {
       batch.create(ref, {
         ...place,
