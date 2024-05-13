@@ -5,7 +5,7 @@ import "moment/locale/ko";
 moment.locale("ko");
 
 import db from "../modules/firestore";
-import { BEARER, NEAR_TOKEN_ISSUE_DAY } from "../consts";
+import { BEARER, COLLECTIONS, NEAR_TOKEN_ISSUE_DAY } from "../consts";
 import { TokenTypes } from "../@types/types";
 import { MoundFirestore } from "../@types/firestore";
 import { ERROR_CODE, TOKEN_ERROR_CODE } from "../consts/code";
@@ -109,7 +109,7 @@ export const accessAuthentication = async (req: Request, res: Response, next: Ne
     }
 
     const user = await db
-      .collection("user")
+      .collection(COLLECTIONS.USER)
       .doc(object.id)
       .get();
 
@@ -118,7 +118,7 @@ export const accessAuthentication = async (req: Request, res: Response, next: Ne
     }
 
     const token = await db
-      .collection("token")
+      .collection(COLLECTIONS.TOKEN)
       .where("userId", "==", user.id)
       .get();
 
@@ -177,7 +177,7 @@ export const refreshAuthentication = async (req: Request, res: Response, next: N
     }
 
     const user = await db
-      .collection("user")
+      .collection(COLLECTIONS.USER)
       .doc(object.id)
       .get();
 
@@ -186,7 +186,7 @@ export const refreshAuthentication = async (req: Request, res: Response, next: N
     }
 
     const token = await db
-      .collection("token")
+      .collection(COLLECTIONS.TOKEN)
       .where("userId", "==", user.id)
       .get();
 

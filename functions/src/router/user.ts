@@ -7,6 +7,7 @@ import { MoundFirestore } from "../@types/firestore";
 import { phoneDelete } from "../modules/sms";
 import { accessAuthentication, accessIssue, refreshIssue } from "../modules/token";
 import { getNowMoment } from "../utils";
+import { COLLECTIONS } from "../consts";
 
 const { PASSWORD_HASH_ALGORITHM } = process.env;
 
@@ -27,7 +28,7 @@ router.post("/login", async (req, res, next) => {
       .digest("hex");
 
     const userDocs = await db
-      .collection("user")
+      .collection(COLLECTIONS.USER)
       .where("account", "==", account)
       .where("password", "==", hash)
       .get();
@@ -43,7 +44,7 @@ router.post("/login", async (req, res, next) => {
     const { token: refresh, expire: refreshExpire } = refreshIssue({ id: user.id });
 
     const tokenDocs = await db
-      .collection("token")
+      .collection(COLLECTIONS.TOKEN)
       .where("userId", "==", user.id)
       .get();
 
@@ -64,7 +65,7 @@ router.post("/login", async (req, res, next) => {
       });
     } else {
       await db
-        .collection("token")
+        .collection(COLLECTIONS.TOKEN)
         .add({
           fcm,
           userAgent,
@@ -99,7 +100,7 @@ router.get("/", accessAuthentication, async (req, res, next) => {
     const { id } = req.user;
 
     const tokens = await db
-      .collection("token")
+      .collection(COLLECTIONS.TOKEN)
       .where("userId", "==", id)
       .get();
 
@@ -151,7 +152,7 @@ router.post("/", async (req, res, next) => {
     // }
 
     const exist = await db
-      .collection("user")
+      .collection(COLLECTIONS.USER)
       .where("account", "==", account)
       .get();
 
@@ -165,7 +166,7 @@ router.post("/", async (req, res, next) => {
       .digest("hex");
 
     const user = await db
-      .collection("user")
+      .collection(COLLECTIONS.USER)
       .add({
         // uid: userRecord.uid,
         account,
@@ -192,7 +193,7 @@ router.post("/", async (req, res, next) => {
     const userAgent = req.headers["user-agent"];
 
     await db
-      .collection("token")
+      .collection(COLLECTIONS.TOKEN)
       .add({
         fcm,
         userAgent,
@@ -230,7 +231,7 @@ router.delete("/", accessAuthentication, async (req, res, next) => {
     }
 
     const user = await db
-      .collection("user")
+      .collection(COLLECTIONS.USER)
       .doc(id)
       .get();
 
@@ -241,7 +242,7 @@ router.delete("/", accessAuthentication, async (req, res, next) => {
     }
 
     const tokenDocs = await db
-      .collection("token")
+      .collection(COLLECTIONS.TOKEN)
       .where("userId", "==", user.id)
       .get();
 
