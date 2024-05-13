@@ -1,11 +1,12 @@
 import express from "express";
 
+import { TestKeyInclude } from "../utils/admin";
 import { accessAuthentication, accessIssue, refreshAuthentication, refreshIssue } from "../modules/token";
 
 const router = express.Router();
 
 // 사용자 아이디 기반 토큰 생성 (로그인)
-router.get("/token/:id", async (req, res, next) => {
+router.get("/token/:id", TestKeyInclude, async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -32,7 +33,7 @@ router.get("/token/:id", async (req, res, next) => {
 });
 
 // 액세스 토큰 검증
-router.get("/token/authcentication/access", accessAuthentication, async (req, res, next) => {
+router.get("/token/authcentication/access", TestKeyInclude, accessAuthentication, async (req, res, next) => {
   try {
     const { id, access, refresh } = req.user;
 
@@ -56,7 +57,7 @@ router.get("/token/authcentication/access", accessAuthentication, async (req, re
 });
 
 // 리프레시 토큰 검증
-router.get("/token/authcentication/refresh", refreshAuthentication, async (req, res, next) => {
+router.get("/token/authcentication/refresh", TestKeyInclude, refreshAuthentication, async (req, res, next) => {
   try {
     const { id, access, refresh } = req.user;
 

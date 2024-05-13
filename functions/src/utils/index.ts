@@ -30,3 +30,8 @@ export const parseExpireToDateAt = (exp: number): Date => {
 export const parseDateToExpiresAt = (date: Date): number => {
   return moment(date).unix();
 };
+
+// 현재 시각 반환
+export const getNowMoment = (format: string = "YYYY-MM-DD HH:mm:ss") => {
+  return moment().format(format);
+};

@@ -56,7 +56,7 @@ export declare namespace TokenTypes {
 
   interface Issue {
     token: string;
-    expire: Date;
+    expire: string;
   }
 
   interface JwtObject extends Payload {

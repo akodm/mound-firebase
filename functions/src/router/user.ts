@@ -4,8 +4,9 @@ import crypto from "crypto";
 import db from "../modules/firestore";
 import { ERROR_CODE } from "../consts/code";
 import { MoundFirestore } from "../@types/firestore";
-import { phoneDelete, phoneVerify } from "../modules/sms";
+import { phoneDelete } from "../modules/sms";
 import { accessAuthentication, accessIssue, refreshIssue } from "../modules/token";
+import { getNowMoment } from "../utils";
 
 const { PASSWORD_HASH_ALGORITHM } = process.env;
 
@@ -14,7 +15,7 @@ const router = express.Router();
 // 사용자 로그인
 router.post("/login", async (req, res, next) => {
   try {
-    const { account, password, device } = req.body;
+    const { account, password, fcm } = req.body;
 
     if (!account?.trim() || !password?.trim()) {
       throw { s: 400, m: "필수 값이 비어있습니다." };
@@ -36,6 +37,7 @@ router.post("/login", async (req, res, next) => {
     }
 
     const [user] = userDocs.docs;
+    const userAgent = req.headers["user-agent"];
 
     const { token: access, expire: accessExpire } = accessIssue({ id: user.id });
     const { token: refresh, expire: refreshExpire } = refreshIssue({ id: user.id });
@@ -46,28 +48,33 @@ router.post("/login", async (req, res, next) => {
       .get();
 
     const exist = tokenDocs.docs.find((doc) => {
-      const { device: tokenDevice } = doc.data() as MoundFirestore.Token;
+      const { userAgent: tokenUserAgent } = doc.data() as MoundFirestore.Token;
 
-      return tokenDevice === device;
+      return tokenUserAgent === userAgent;
     });
 
     if (exist) {
       await exist.ref.update({
+        fcm,
         access,
         accessExpire,
         refresh,
         refreshExpire,
+        updatedAt: getNowMoment(),
       });
     } else {
       await db
         .collection("token")
         .add({
-          device,
+          fcm,
+          userAgent,
           access,
           accessExpire,
           refresh,
           refreshExpire,
           userId: user.id,
+          createdAt: getNowMoment(),
+          updatedAt: getNowMoment(),
         });
     }
 
@@ -86,15 +93,46 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
+// 시용자 로그아웃
+router.get("/", accessAuthentication, async (req, res, next) => {
+  try {
+    const { id } = req.user;
+
+    const tokens = await db
+      .collection("token")
+      .where("userId", "==", id)
+      .get();
+
+    const deleteToken = async (item: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>) => {
+      try {
+        await item.ref.delete();
+      } catch (err) {
+        throw err;
+      }
+    };
+
+    await Promise.all(tokens.docs.map(deleteToken));
+
+    return res.status(200).send({
+      result: true,
+      message: "",
+      data: true,
+      code: null,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 // 사용자 생성 (전화번호 인증되어 있어야 함)
 router.post("/", async (req, res, next) => {
   try {
     const {
       account,
       password,
+      fcm,
       phone,
       termsToService = false,
-      device,
     } = req.body;
 
     if (
@@ -141,6 +179,8 @@ router.post("/", async (req, res, next) => {
         comment: true,
         linke: true,
         marketing: false,
+        createdAt: getNowMoment(),
+        updatedAt: getNowMoment(),
       });
 
     if (!user?.id) {
@@ -149,16 +189,20 @@ router.post("/", async (req, res, next) => {
 
     const { token: access, expire: accessExpire } = accessIssue({ id: user.id });
     const { token: refresh, expire: refreshExpire } = refreshIssue({ id: user.id });
+    const userAgent = req.headers["user-agent"];
 
     await db
       .collection("token")
       .add({
-        device,
+        fcm,
+        userAgent,
         access,
         accessExpire,
         refresh,
         refreshExpire,
         userId: user.id,
+        createdAt: getNowMoment(),
+        updatedAt: getNowMoment(),
       });
 
     return res.status(200).send({

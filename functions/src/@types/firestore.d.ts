@@ -5,8 +5,8 @@ export declare namespace MoundFirestore {
 
   interface Constructor {
     id: string;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
   }
 
   interface PlaceStructor {
@@ -35,7 +35,8 @@ export declare namespace MoundFirestore {
   }
 
   interface Token extends Constructor {
-    device: string;
+    fcm: string;
+    userAgent: string;
     access: string;
     accessExpire: string;
     refresh: string;

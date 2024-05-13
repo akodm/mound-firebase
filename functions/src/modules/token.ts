@@ -33,7 +33,7 @@ const refreshOptions: SignOptions = {
 export const accessIssue = (payload: TokenTypes.Payload, options: SignOptions = accessOptions): TokenTypes.Issue => {
   try {
     const token = jwt.sign(payload, ACCESS_KEY as string, options);
-    const expire = moment().add(3, "days").toDate();
+    const expire = moment().add(3, "days").format("YYYY-MM-DD HH:mm:ss");
 
     return { token, expire };
   } catch (err) {
@@ -62,7 +62,7 @@ export const accessVerify = async (string: string, options: jwt.VerifyOptions = 
 export const refreshIssue = (payload: TokenTypes.Payload, options: SignOptions = refreshOptions): TokenTypes.Issue => {
   try {
     const token = jwt.sign(payload, REFRESH_KEY as string, options);
-    const expire = moment().add(30, "days").toDate();
+    const expire = moment().add(30, "days").format("YYYY-MM-DD HH:mm:ss");
 
     return { token, expire };
   } catch (err) {
@@ -145,7 +145,7 @@ export const accessAuthentication = async (req: Request, res: Response, next: Ne
     return next();
   } catch (err: any) {
     if (err.name === TOKEN_ERROR_CODE.JSON_WEB_TOKEN) {
-      return next({ s: 403, m: "잘못된 토큰입니다.", c: ERROR_CODE.REQUEST_LOGIN });
+      return next({ s: 401, m: "잘못된 토큰입니다.", c: ERROR_CODE.REQUEST_LOGIN });
     }
     if (err.name === TOKEN_ERROR_CODE.TOKEN_EXPIRED) {
       throw { s: 403, m: "만료된 토큰입니다.", c: ERROR_CODE.REQUEST_REFRESH };
@@ -214,7 +214,7 @@ export const refreshAuthentication = async (req: Request, res: Response, next: N
     const updateTokens: MoundFirestore.DataJson = {
       access,
       accessExpire,
-      updatedAt: new Date(),
+      updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
     };
 
     if (result?.token) {
