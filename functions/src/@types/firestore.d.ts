@@ -3,6 +3,12 @@ export declare namespace MoundFirestore {
     [x: string]: any;
   }
 
+  interface PlaceSearch {
+    isSiDo?: boolean;
+    isSiGuGun?: boolean;
+    isEupMyeonDong?: boolean;
+  }
+
   interface Collections {
     USER: "user";
     TOKEN: "token";

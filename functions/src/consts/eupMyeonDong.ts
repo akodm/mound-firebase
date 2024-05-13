@@ -1,6 +1,6 @@
 import { OpenAPITypes } from "../@types/types";
 
-export const eupMyeonDong: OpenAPITypes.LocationParse[] = [
+export const EUPMYEONDONG: OpenAPITypes.LocationParse[] = [
   {
     "latitude": "1710800",
     "longitude": "925663",

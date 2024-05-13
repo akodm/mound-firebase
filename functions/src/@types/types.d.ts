@@ -1,5 +1,3 @@
-import { Request } from "express";
-
 export declare namespace OpenAPITypes {
   interface LocationParams {
     accessToken: string;

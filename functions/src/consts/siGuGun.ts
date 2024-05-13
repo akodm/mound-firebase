@@ -1,6 +1,6 @@
 import { OpenAPITypes } from "../@types/types";
 
-export const siGuGun: OpenAPITypes.LocationParse[] = [
+export const SIGUGUN: OpenAPITypes.LocationParse[] = [
   {
     "latitude": "1944250",
     "longitude": "961366",
