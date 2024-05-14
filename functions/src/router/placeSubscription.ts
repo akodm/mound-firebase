@@ -6,6 +6,7 @@ import { COLLECTIONS } from "../consts";
 import { MoundFirestore } from "../@types/firestore";
 import { EUPMYEONDONG } from "../consts/eupMyeonDong";
 import { getNowMoment } from "../utils";
+import { getPlace } from "../modules/place";
 
 const router = express.Router();
 
@@ -45,42 +46,10 @@ router.put("/", accessAuthentication, async (req, res, next) => {
     }
 
     const placeList: MoundFirestore.PlaceStructor[] = EUPMYEONDONG.reduce((res: MoundFirestore.PlaceStructor[], crr) => {
-      const [_sido, _sigugun, _subsigugun, _eupmyeondong] = crr.address.split(" ");
-      const tempSiGuGun = _eupmyeondong ? `${_sigugun} ${_subsigugun}` : _sigugun;
-      const tempEupMyeonDong = _eupmyeondong ? _eupmyeondong : _subsigugun;
-      const options: MoundFirestore.PlaceSearch = {};
+      const place = getPlace(crr, siDo, siGuGun, eupMyeonDong);
 
-      if (siDo) {
-        options.isSiDo = siDo === _sido;
-      }
-      if (siGuGun) {
-        options.isSiGuGun = siGuGun === tempSiGuGun;
-      }
-      if (eupMyeonDong) {
-        options.isEupMyeonDong = eupMyeonDong === tempEupMyeonDong;
-      }
-
-      const filter = Object
-        .entries(options)
-        .map(([_, value]) => value)
-        .reduce((res, crr) => {
-          if (!crr) {
-            res = false;
-          }
-
-          return res;
-        }, true);
-
-      if (filter) {
-        res.push({
-          location: crr.address,
-          siDo: _sido,
-          siGuGun: tempSiGuGun,
-          eupMyeonDong: tempEupMyeonDong,
-          code: crr.code,
-          latitude: crr.latitude,
-          longitude: crr.longitude,
-        })
+      if (place) {
+        res.push(place);
       }
 
       return res;

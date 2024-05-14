@@ -2,7 +2,6 @@ import express from "express";
 import crypto from "crypto";
 
 import db from "../modules/firestore";
-import { ERROR_CODE } from "../consts/code";
 import { MoundFirestore } from "../@types/firestore";
 import { phoneDelete } from "../modules/sms";
 import { accessAuthentication, accessIssue, refreshIssue } from "../modules/token";
@@ -225,10 +224,6 @@ router.post("/", async (req, res, next) => {
 router.delete("/", accessAuthentication, async (req, res, next) => {
   try {
     const { id } = req.user;
-
-    if (!id?.trim()) {
-      throw { s: 401, m: "필수 값이 비어있습니다.", c: ERROR_CODE.REQUEST_LOGIN };
-    }
 
     const user = await db
       .collection(COLLECTIONS.USER)

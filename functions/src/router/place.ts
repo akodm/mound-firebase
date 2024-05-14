@@ -5,7 +5,7 @@ import { accessAuthentication } from "../modules/token";
 
 const router = express.Router();
 
-// 위도 경도를 위치 값으로 변환
+// 위도 경도를 위치로 변환
 router.get("/geocode", accessAuthentication, async (req, res, next) => {
   try {
     const { x, y } = req.query;
