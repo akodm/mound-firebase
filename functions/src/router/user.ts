@@ -138,6 +138,7 @@ router.post("/", async (req, res, next) => {
     if (
       !account?.trim() ||
       !password?.trim() ||
+      !fcm?.trim() ||
       !phone?.trim() ||
       !termsToService
     ) {
@@ -245,7 +246,7 @@ router.delete("/", accessAuthentication, async (req, res, next) => {
       tx.delete(user.ref);
       tokenDocs.docs.forEach((doc) => tx.delete(doc.ref));
 
-      await phoneDelete(uid);
+      // await phoneDelete(uid);
     });
 
     return res.status(200).send({

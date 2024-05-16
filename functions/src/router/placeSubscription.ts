@@ -20,9 +20,7 @@ router.get("/", accessAuthentication, async (req, res, next) => {
       .where("userId", "==", id)
       .get();
 
-    const data = placeSubscription.docs.map((doc) => {
-      return doc.data() as MoundFirestore.PlaceSubscription;
-    });
+    const data = placeSubscription.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as MoundFirestore.PlaceSubscription);
 
     return res.status(200).send({
       result: true,
@@ -60,13 +58,15 @@ router.put("/", accessAuthentication, async (req, res, next) => {
       .where("userId", "==", id)
       .get();
 
-    const ref = db.collection(COLLECTIONS.PLACE_SUBSCRIPTION).doc();
     const batch = db.batch();
 
     placeSubscription.docs.forEach((doc) => batch.delete(doc.ref));
     placeList.forEach((place) => {
-      batch.create(ref, {
+      const ref = db.collection(COLLECTIONS.PLACE_SUBSCRIPTION).doc();
+
+      batch.set(ref, {
         ...place,
+        userId: id,
         createdAt: getNowMoment(),
         updatedAt: getNowMoment(),
       });
@@ -79,7 +79,7 @@ router.put("/", accessAuthentication, async (req, res, next) => {
       .where("userId", "==", id)
       .get();
 
-    const data = changePlaceSubscription.docs;
+    const data = changePlaceSubscription.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as MoundFirestore.PlaceSubscription);
 
     return res.status(200).send({
       result: true,

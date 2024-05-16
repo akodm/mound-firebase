@@ -147,7 +147,7 @@ export declare namespace MoundFirestore {
   }
 
   interface CommentLike extends Constructor {
-    postCommentId: string;
+    commentId: string;
     userId: string;
   }
 }

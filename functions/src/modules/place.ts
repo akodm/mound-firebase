@@ -27,7 +27,7 @@ export const getGeocode = async ({ x, y }: OpenAPITypes.GeocodeCoord) => {
 // 시도, 시구군, 읍면동 토대로 장소 데이터 찾기
 export const getPlace = (item: OpenAPITypes.LocationParse, ...args: string[]): MoundFirestore.PlaceStructor | null => {
   const [siDo, siGuGun, eupMyeonDong] = args;
-  const [_sido, _sigugun, _subsigugun, _eupmyeondong] = item.address.split(" ");
+  const [_sido, _sigugun, _subsigugun, _eupmyeondong] = item.location.split(" ");
   const tempSiGuGun = _eupmyeondong ? `${_sigugun} ${_subsigugun}` : _sigugun;
   const tempEupMyeonDong = _eupmyeondong ? _eupmyeondong : _subsigugun;
   const options: MoundFirestore.PlaceSearch = {};
@@ -60,7 +60,7 @@ export const getPlace = (item: OpenAPITypes.LocationParse, ...args: string[]): M
 
   if (filter) {
     return {
-      location: item.address,
+      location: item.location,
       siDo: _sido,
       siGuGun: tempSiGuGun,
       eupMyeonDong: tempEupMyeonDong,
