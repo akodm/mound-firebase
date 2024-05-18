@@ -112,8 +112,9 @@ export const accessAuthentication = async (req: Request, res: Response, next: Ne
       .collection(COLLECTIONS.USER)
       .doc(object.id)
       .get();
+    const data = user.data();
 
-    if (!user?.id) {
+    if (!user?.id || !data) {
       throw { s: 401, m: "사용자를 찾을 수 없습니다.", c: ERROR_CODE.REQUEST_LOGIN };
     }
 
@@ -140,6 +141,7 @@ export const accessAuthentication = async (req: Request, res: Response, next: Ne
 
     req.user = {
       id: user.id,
+      user: data,
     };
 
     return next();
@@ -180,8 +182,9 @@ export const refreshAuthentication = async (req: Request, res: Response, next: N
       .collection(COLLECTIONS.USER)
       .doc(object.id)
       .get();
+    const data = user.data();
 
-    if (!user?.id) {
+    if (!user?.id || !data) {
       throw { s: 401, m: "사용자를 찾을 수 없습니다.", c: ERROR_CODE.REQUEST_LOGIN };
     }
 
@@ -226,6 +229,7 @@ export const refreshAuthentication = async (req: Request, res: Response, next: N
 
     req.user = {
       id: user.id,
+      user: data,
       access,
       refresh: result?.token,
     }

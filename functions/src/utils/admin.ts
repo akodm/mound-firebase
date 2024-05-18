@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
+import { MoundFirestore } from "../@types/firestore";
+
 const { TEST_CODE } = process.env;
 
 // 테스트용 키 포함 처리
@@ -26,5 +28,79 @@ export const TestKeyInclude = async (req: Request, res: Response, next: NextFunc
     return next();
   } catch (err) {
     return next(err);
+  }
+};
+
+// 하위 컬렉션 조회 및 병합
+export const getChildCollections = async (ref: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>, ...args: MoundFirestore.GetChildCollections[]) => {
+  try {
+    const json: any = {};
+
+    const getDocumentData = async (arg: MoundFirestore.GetChildCollections) => {
+      const argDocs = await ref
+        .collection(arg.name)
+        .get();
+
+      if (argDocs.empty) {
+        switch (arg.relation) {
+          case "one":
+            json[arg.name] = null;
+          case "many":
+          default:
+            json[arg.name] = [];
+        }
+      } else {
+        switch (arg.relation) {
+          case "one":
+            const [doc] = argDocs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  
+            json[arg.name] = doc ? doc : null;
+            break;
+          case "many":
+          default:
+            json[arg.name] = argDocs.docs.reduce((res: any[], crr) => {
+              if (crr?.id) {
+                res.push({ id: crr.id, ...crr.data() });
+              }
+  
+              return res;
+            }, []);
+            break;
+        }
+      }
+    };
+
+    await Promise.all(args.map(getDocumentData));
+
+    return json;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// 하위 컬렉션 조회 실행 함수
+export const getArrayChildProcessor = async (querySnapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>, ...args: MoundFirestore.GetChildCollections[]): Promise<FirebaseFirestore.DocumentData[]> => {
+  try {
+    if (querySnapshot.empty) {
+      return [];
+    }
+
+    const processing = async (doc: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>): Promise<FirebaseFirestore.DocumentData> => {
+      try {
+        const json = await getChildCollections(doc.ref, ...args);
+
+        return {
+          id: doc.id,
+          ...doc.data(),
+          ...json,
+        };
+      } catch (err) {
+        throw err;
+      }
+    };
+
+    return await Promise.all(querySnapshot.docs.map(processing));
+  } catch (err) {
+    throw err;
   }
 };

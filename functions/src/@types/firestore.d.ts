@@ -3,6 +3,11 @@ export declare namespace MoundFirestore {
     [x: string]: any;
   }
 
+  interface GetChildCollections {
+    name: string;
+    relation: "one" | "many";
+  }
+
   interface PlaceSearch {
     isSiDo?: boolean;
     isSiGuGun?: boolean;
@@ -12,7 +17,8 @@ export declare namespace MoundFirestore {
   interface Collections {
     USER: "user";
     TOKEN: "token";
-    REPORT: "report";
+    POST_REPORT: "postReport";
+    POST_COMMENT_REPORT: "postCommentReport";
     NOTICE: "notice";
     NOTIFICATION: "notification";
     PLACE_SUBSCRIPTION: "placeSubscription";
@@ -21,8 +27,6 @@ export declare namespace MoundFirestore {
     POST_LIKE: "postLike";
     POST_MEDIA: "postMedia";
     POST_COMMENT: "postComment";
-    COMMENT_REPLY: "commentReply";
-    COMMENT_LIKE: "commentLike";
   }
 
   interface Constructor {
@@ -66,13 +70,22 @@ export declare namespace MoundFirestore {
     userId: string;
   }
 
-  interface Report extends Constructor {
+  interface PostReport extends Constructor {
     text: string;
     reportType: string;
+    postId: string;
     userId: string;
-    postId?: string;
-    postCommentId?: string;
-    commentReplyId?: string;
+    post: Post;
+    user: User;
+  }
+
+  interface PostCommentReport extends Constructor {
+    text: string;
+    reportType: string;
+    postCommentId: string;
+    userId: string;
+    postComment: PostComment;
+    user: User;
   }
 
   interface Notice extends Constructor {
@@ -80,6 +93,7 @@ export declare namespace MoundFirestore {
     content: string;
     read: boolean;
     userId: string;
+    user: User;
   }
 
   interface Notification extends Constructor {
@@ -105,16 +119,21 @@ export declare namespace MoundFirestore {
     reportCount: number;
     block: boolean;
     userId: string;
+    user: User;
   }
 
   interface PostView extends Constructor {
     postId: string;
     userId: string;
+    post: Post;
+    user: User;
   }
 
   interface PostLike extends Constructor {
     postId: string;
     userId: string;
+    post: Post;
+    user: User;
   }
 
   interface PostMedia extends Constructor {
@@ -124,30 +143,17 @@ export declare namespace MoundFirestore {
     size: number;
     postId: string;
     userId: string;
+    user: User;
   }
 
   interface PostComment extends Constructor {
     text: string;
-    likeCount: number;
-    replyCount: number;
     reportCount: number;
     block: boolean;
     postId: string;
+    postCommentId?: string;
     userId: string;
-  }
-
-  interface CommentReply extends Constructor {
-    text: string;
-    likeCount: number;
-    reportCount: number;
-    block: boolean;
-    postId: string;
-    postCommentId: string;
-    userId: string;
-  }
-
-  interface CommentLike extends Constructor {
-    commentId: string;
-    userId: string;
+    postComment?: PostComment;
+    user: User;
   }
 }

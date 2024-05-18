@@ -32,7 +32,7 @@ router.post("/login", async (req, res, next) => {
       .where("password", "==", hash)
       .get();
 
-    if (!userDocs?.docs?.length) {
+    if (userDocs.empty) {
       throw { s: 403, m: "사용자를 찾을 수 없습니다." };
     }
 
@@ -45,16 +45,13 @@ router.post("/login", async (req, res, next) => {
     const tokenDocs = await db
       .collection(COLLECTIONS.TOKEN)
       .where("userId", "==", user.id)
+      .where("userAgent", "==", userAgent)
       .get();
 
-    const exist = tokenDocs.docs.find((doc) => {
-      const { userAgent: tokenUserAgent } = doc.data() as MoundFirestore.Token;
+    const [token] = tokenDocs.docs;
 
-      return tokenUserAgent === userAgent;
-    });
-
-    if (exist) {
-      await exist.ref.update({
+    if (token) {
+      await token.ref.update({
         fcm,
         access,
         accessExpire,
@@ -97,25 +94,23 @@ router.post("/login", async (req, res, next) => {
 router.get("/", accessAuthentication, async (req, res, next) => {
   try {
     const { id } = req.user;
+    const userAgent = req.headers["user-agent"];
 
-    const tokens = await db
+    const tokenDocs = await db
       .collection(COLLECTIONS.TOKEN)
       .where("userId", "==", id)
+      .where("userAgent", "==", userAgent)
       .get();
 
-    const deleteToken = async (item: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>) => {
-      try {
-        await item.ref.delete();
-      } catch (err) {
-        throw err;
-      }
-    };
+    const [token] = tokenDocs.docs;
 
-    await Promise.all(tokens.docs.map(deleteToken));
+    if (token) {
+      await token.ref.delete();
+    }
 
     return res.status(200).send({
       result: true,
-      message: "",
+      message: "로그아웃 처리되었습니다.",
       data: true,
       code: null,
     });
