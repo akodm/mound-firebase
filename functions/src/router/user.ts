@@ -171,6 +171,7 @@ router.post("/", async (req, res, next) => {
         phone,
         verify: true,
         termsToService,
+        reportCount: 0,
         block: false,
         blockExpire: null,
         notice: true,

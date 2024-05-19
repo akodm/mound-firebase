@@ -54,6 +54,7 @@ export declare namespace MoundFirestore {
     phone: string;
     verify: boolean;
     termsToService: boolean;
+    reportCount: 0;
     block: boolean;
     blockExpire: string | null;
     notice: boolean;
