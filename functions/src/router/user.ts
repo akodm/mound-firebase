@@ -2,8 +2,8 @@ import express from "express";
 import crypto from "crypto";
 
 import db from "../modules/firestore";
-import { MoundFirestore } from "../@types/firestore";
-import { phoneDelete } from "../modules/sms";
+// import { MoundFirestore } from "../@types/firestore";
+// import { phoneDelete } from "../modules/sms";
 import { accessAuthentication, accessIssue, refreshIssue } from "../modules/token";
 import { getNowMoment } from "../utils";
 import { COLLECTIONS } from "../consts";
@@ -229,7 +229,7 @@ router.delete("/", accessAuthentication, async (req, res, next) => {
       .doc(id)
       .get();
 
-    const { uid } = user.data() as MoundFirestore.User;
+    // const { uid } = user.data() as MoundFirestore.User;
 
     if (!user?.id) {
       throw { s: 403, m: "시용자를 찾을 수 없습니다." };

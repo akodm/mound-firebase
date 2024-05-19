@@ -3,7 +3,9 @@ import { MoundFirestore } from "../@types/firestore";
 export const COLLECTIONS: MoundFirestore.Collections = {
   USER: "user",
   TOKEN: "token",
-  REPORT: "report",
+  USER_REPORT: "userReport",
+  POST_REPORT: "postReport",
+  POST_COMMENT_REPORT: "postCommentReport",
   NOTICE: "notice",
   NOTIFICATION: "notification",
   PLACE_SUBSCRIPTION: "placeSubscription",
@@ -12,8 +14,6 @@ export const COLLECTIONS: MoundFirestore.Collections = {
   POST_LIKE: "postLike",
   POST_MEDIA: "postMedia",
   POST_COMMENT: "postComment",
-  COMMENT_REPLY: "commentReply",
-  COMMENT_LIKE: "commentLike",
 };
 export const BEARER = "Bearer";
 export const NEAR_TOKEN_ISSUE_DAY = 7;
