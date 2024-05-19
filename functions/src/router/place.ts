@@ -1,12 +1,11 @@
 import express from "express";
 
 import { getGeocode } from "../modules/place";
-import { accessAuthentication } from "../modules/token";
 
 const router = express.Router();
 
 // 위도 경도를 위치로 변환
-router.get("/geocode", accessAuthentication, async (req, res, next) => {
+router.get("/geocode", async (req, res, next) => {
   try {
     const { x, y } = req.query;
 

@@ -91,7 +91,7 @@ router.post("/login", async (req, res, next) => {
 });
 
 // 시용자 로그아웃
-router.get("/", accessAuthentication, async (req, res, next) => {
+router.post("/logout", accessAuthentication, async (req, res, next) => {
   try {
     const { id } = req.user;
     const userAgent = req.headers["user-agent"];
@@ -124,6 +124,7 @@ router.post("/", async (req, res, next) => {
   try {
     const {
       account,
+      nickname = "",
       password,
       fcm,
       phone,
@@ -165,9 +166,10 @@ router.post("/", async (req, res, next) => {
       .add({
         // uid: userRecord.uid,
         account,
+        nickname,
         password: hash,
         phone,
-        vertify: true,
+        verify: true,
         termsToService,
         block: false,
         blockExpire: null,

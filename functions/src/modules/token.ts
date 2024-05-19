@@ -141,7 +141,12 @@ export const accessAuthentication = async (req: Request, res: Response, next: Ne
 
     req.user = {
       id: user.id,
-      user: data,
+      user: {
+        nickname: data.nickname,
+        verify: data.verify,
+        block: data.block,
+        blockExpire: data.blockExpire,
+      },
     };
 
     return next();
@@ -229,7 +234,12 @@ export const refreshAuthentication = async (req: Request, res: Response, next: N
 
     req.user = {
       id: user.id,
-      user: data,
+      user: {
+        nickname: data.nickname,
+        verify: data.verify,
+        block: data.block,
+        blockExpire: data.blockExpire,
+      },
       access,
       refresh: result?.token,
     }

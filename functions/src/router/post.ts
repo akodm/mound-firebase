@@ -6,16 +6,58 @@ import { COLLECTIONS } from "../consts";
 import { EUPMYEONDONG } from "../consts/eupMyeonDong";
 import { getArrayChildProcessor } from "../utils/admin";
 import { accessAuthentication } from "../modules/token";
+import { getNowMoment } from "../utils";
 
 const router = express.Router();
 
-// 지역 기반 전체 글 목록 반환 (페이지네이션 기본, 지역 정보 없을 시 최근 생성 기준 반환)
+// 지역 기반 전체 글 목록 반환 (지역 정보 없을 시 최근 생성 기준 반환)
 router.get("/", async (req, res, next) => {
   try {
+    const { codes = [] } = req.query;
+
+    if (!Array.isArray(codes)) {
+      throw { s: 400, m: "위치 구독이 잘못되었습니다." };
+    }
+
+    let postDocs = null;
+
+    if (codes.length) {
+      postDocs = await db
+        .collection(COLLECTIONS.POST)
+        .where("code", "in", codes)
+        .orderBy("updatedAt", "desc")
+        .get();
+    } else {
+      postDocs = await db
+        .collection(COLLECTIONS.POST)
+        .orderBy("createdAt", "desc")
+        .get();
+    }
+
+    const data = await getArrayChildProcessor(
+      postDocs,
+      {
+        name: "postView",
+        relation: "many",
+      },
+      {
+        name: "postLike",
+        relation: "many",
+      },
+      {
+        name: "postMedia",
+        relation: "many",
+      },
+      {
+        name: "postComment",
+        relation: "many",
+      },
+    );
+
     return res.status(200).send({
       result: true,
       message: "글 목록을 가져왔습니다.",
-      data: [],
+      data,
       code: null,
     });
   } catch (err) {
@@ -107,6 +149,8 @@ router.post("/", accessAuthentication, async (req, res, next) => {
         userId: id,
         ...place,
         ...user,
+        createdAt: getNowMoment(),
+        updatedAt: getNowMoment(),
       });
 
     const postDoc = await post.get();
@@ -159,6 +203,7 @@ router.put("/", accessAuthentication, async (req, res, next) => {
       title,
       content,
       exactly,
+      updatedAt: getNowMoment(),
     }, { merge: true });
 
     return res.status(200).send({

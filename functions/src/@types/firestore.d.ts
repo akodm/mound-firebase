@@ -48,6 +48,7 @@ export declare namespace MoundFirestore {
   interface User extends Constructor {
     uid: string;
     account: string;
+    nickname: string;
     password: string;
     phone: string;
     verify: boolean;
