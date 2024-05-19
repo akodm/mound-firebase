@@ -24,8 +24,6 @@ import postRouter from "./router/post";
 import placeSubscriptionRouter from "./router/placeSubscription";
 import notificationRouter from "./router/notification";
 import noticeRouter from "./router/notice";
-import commentReplyRouter from "./router/commentReply";
-import commentLikeRouter from "./router/commentLike";
 
 const { NODE_ENV, ADMIN_URL } = process.env;
 
@@ -53,8 +51,6 @@ app.use("/post", postRouter);
 app.use("/placeSubscription", placeSubscriptionRouter);
 app.use("/notification", notificationRouter);
 app.use("/notice", noticeRouter);
-app.use("/commentReply", commentReplyRouter);
-app.use("/commentLike", commentLikeRouter);
 
 // 잘못된 주소 접근 시
 app.use((req: Request, res: Response, next: NextFunction) => {

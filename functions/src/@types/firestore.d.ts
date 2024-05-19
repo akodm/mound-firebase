@@ -17,6 +17,7 @@ export declare namespace MoundFirestore {
   interface Collections {
     USER: "user";
     TOKEN: "token";
+    USER_REPORT: "userReport";
     POST_REPORT: "postReport";
     POST_COMMENT_REPORT: "postCommentReport";
     NOTICE: "notice";
@@ -69,6 +70,14 @@ export declare namespace MoundFirestore {
     refresh: string;
     refreshExpire: string;
     userId: string;
+  }
+
+  interface UserReport extends Constructor {
+    text: string;
+    reportType: string;
+    targetId: string;
+    userId: string;
+    user: User;
   }
 
   interface PostReport extends Constructor {
