@@ -13,18 +13,20 @@ const router = express.Router();
 // 지역 기반 전체 글 목록 반환 (지역 정보 없을 시 최근 생성 기준 반환)
 router.get("/", async (req, res, next) => {
   try {
-    const { codes = [] } = req.query;
+    const { codes = "[]" } = req.query;
 
-    if (!Array.isArray(codes)) {
+    const codeArray = JSON.parse(codes as string);
+
+    if (!Array.isArray(codeArray)) {
       throw { s: 400, m: "위치 구독이 잘못되었습니다." };
     }
 
     let postDocs = null;
 
-    if (codes.length) {
+    if (codeArray.length) {
       postDocs = await db
         .collection(COLLECTIONS.POST)
-        .where("code", "in", codes)
+        .where("code", "in", codeArray)
         .orderBy("updatedAt", "desc")
         .get();
     } else {
