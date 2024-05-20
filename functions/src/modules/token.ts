@@ -142,6 +142,7 @@ export const accessAuthentication = async (req: Request, res: Response, next: Ne
     req.user = {
       id: user.id,
       user: {
+        id: user.id,
         nickname: data.nickname,
         verify: data.verify,
         reportCount: data.reportCount,
@@ -236,6 +237,7 @@ export const refreshAuthentication = async (req: Request, res: Response, next: N
     req.user = {
       id: user.id,
       user: {
+        id: user.id,
         nickname: data.nickname,
         verify: data.verify,
         reportCount: data.reportCount,

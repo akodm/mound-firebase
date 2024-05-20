@@ -2,11 +2,11 @@ import express from "express";
 import { FieldPath } from "firebase-admin/firestore";
 
 import db from "../modules/firestore";
+import { getNowMoment } from "../utils";
 import { COLLECTIONS } from "../consts";
 import { EUPMYEONDONG } from "../consts/eupMyeonDong";
 import { getArrayChildProcessor } from "../utils/admin";
 import { accessAuthentication } from "../modules/token";
-import { getNowMoment } from "../utils";
 
 const router = express.Router();
 
@@ -37,19 +37,19 @@ router.get("/", async (req, res, next) => {
     const data = await getArrayChildProcessor(
       postDocs,
       {
-        name: "postView",
+        name: COLLECTIONS.POST_VIEW,
         relation: "many",
       },
       {
-        name: "postLike",
+        name: COLLECTIONS.POST_LIKE,
         relation: "many",
       },
       {
-        name: "postMedia",
+        name: COLLECTIONS.POST_MEDIA,
         relation: "many",
       },
       {
-        name: "postComment",
+        name: COLLECTIONS.POST_COMMENT,
         relation: "many",
       },
     );
@@ -57,6 +57,47 @@ router.get("/", async (req, res, next) => {
     return res.status(200).send({
       result: true,
       message: "글 목록을 가져왔습니다.",
+      data,
+      code: null,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// 사용자 기반 글 반환
+router.get("/user", accessAuthentication, async (req, res, next) => {
+  try {
+    const { id } = req.user;
+
+    const postDocs = await db
+      .collection(COLLECTIONS.POST)
+      .where("userId", "==", id)
+      .get();
+
+    const data = await getArrayChildProcessor(
+      postDocs,
+      {
+        name: COLLECTIONS.POST_VIEW,
+        relation: "many",
+      },
+      {
+        name: COLLECTIONS.POST_LIKE,
+        relation: "many",
+      },
+      {
+        name: COLLECTIONS.POST_MEDIA,
+        relation: "many",
+      },
+      {
+        name: COLLECTIONS.POST_COMMENT,
+        relation: "many",
+      },
+    );
+
+    return res.status(200).send({
+      result: true,
+      message: "글을 가져왔습니다.",
       data,
       code: null,
     });
@@ -78,19 +119,19 @@ router.get("/:id", async (req, res, next) => {
     const [data = null] = await getArrayChildProcessor(
       postDocs,
       {
-        name: "postView",
+        name: COLLECTIONS.POST_VIEW,
         relation: "many",
       },
       {
-        name: "postLike",
+        name: COLLECTIONS.POST_LIKE,
         relation: "many",
       },
       {
-        name: "postMedia",
+        name: COLLECTIONS.POST_MEDIA,
         relation: "many",
       },
       {
-        name: "postComment",
+        name: COLLECTIONS.POST_COMMENT,
         relation: "many",
       },
     );
@@ -109,7 +150,7 @@ router.get("/:id", async (req, res, next) => {
 // 글 생성
 router.post("/", accessAuthentication, async (req, res, next) => {
   try {
-    const { id, user } = req.user;
+    const { id: userId, user } = req.user;
     const {
       title = "",
       content,
@@ -146,9 +187,9 @@ router.post("/", accessAuthentication, async (req, res, next) => {
         commentCount: 0,
         reportCount: 0,
         block: false,
-        userId: id,
-        ...place,
-        ...user,
+        place,
+        user,
+        userId,
         createdAt: getNowMoment(),
         updatedAt: getNowMoment(),
       });

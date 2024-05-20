@@ -52,7 +52,7 @@ export const getChildCollections = async (ref: FirebaseFirestore.DocumentReferen
       } else {
         switch (arg.relation) {
           case "one":
-            const [doc] = argDocs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            const [doc] = argDocs.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
   
             json[arg.name] = doc ? doc : null;
             break;
@@ -60,7 +60,7 @@ export const getChildCollections = async (ref: FirebaseFirestore.DocumentReferen
           default:
             json[arg.name] = argDocs.docs.reduce((res: any[], crr) => {
               if (crr?.id) {
-                res.push({ id: crr.id, ...crr.data() });
+                res.push({ ...crr.data(), id: crr.id });
               }
   
               return res;
@@ -90,14 +90,48 @@ export const getArrayChildProcessor = async (querySnapshot: FirebaseFirestore.Qu
         const json = await getChildCollections(doc.ref, ...args);
 
         return {
-          id: doc.id,
           ...doc.data(),
           ...json,
+          id: doc.id,
         };
       } catch (err) {
         throw err;
       }
     };
+
+    return await Promise.all(querySnapshot.docs.map(processing));
+  } catch (err) {
+    throw err;
+  }
+};
+
+// 상위 컬렉션 조회 함수
+export const getParentCollection = async (querySnapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>, key: string) => {
+  try {
+    if (querySnapshot.empty) {
+      return [];
+    }
+
+    const processing = async (doc: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>): Promise<FirebaseFirestore.DocumentData> => {
+      try {
+        const json = { ...doc.data(), id: doc.id };
+        const parent = await doc.ref.parent.get();
+
+        if (parent.empty) {
+          return {
+            ...json,
+            [key]: null,
+          };
+        }
+
+        return {
+          ...json,
+          [key]: parent.docs.map((doc) => ({ ...doc.data(), id: doc.id, name: doc.ref.path })),
+        };
+      } catch (err) {
+        throw err;
+      }
+    }
 
     return await Promise.all(querySnapshot.docs.map(processing));
   } catch (err) {
