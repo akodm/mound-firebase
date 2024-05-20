@@ -5,6 +5,7 @@ import db from "../modules/firestore";
 import { COLLECTIONS } from "../consts";
 import { getParentCollection } from "../utils/admin";
 import { accessAuthentication } from "../modules/token";
+import { getNowMoment } from "../utils";
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.get("/", accessAuthentication, async (req, res, next) => {
     const { id } = req.user;
 
     const postLikeDocs = await db
-      .collection(COLLECTIONS.POST_LIKE)
+      .collectionGroup(COLLECTIONS.POST_LIKE)
       .where("userId", "==", id)
       .get();
 
@@ -53,27 +54,29 @@ router.put("/", accessAuthentication, async (req, res, next) => {
     const [post] = postDocs.docs;
     const postRef = post.ref;
 
-    const postLikeDocs = await db
+    const postLikeDocs = await postRef
       .collection(COLLECTIONS.POST_LIKE)
       .where("userId", "==", userId)
       .get();
 
     await db.runTransaction(async (tx) => {
       if (postLikeDocs.empty) {
-        const postLikeRef = db.collection(COLLECTIONS.POST_LIKE).doc();
+        const postLikeRef = postRef.collection(COLLECTIONS.POST_LIKE).doc();
 
         tx.create(postLikeRef, {
           post,
           user,
           postId,
           userId,
+          createdAt: getNowMoment(),
+          updatedAt: getNowMoment(),
         });
-        tx.update(postRef, { likeCount: FieldValue.increment(1) });
+        tx.update(postRef, { likeCount: FieldValue.increment(1), updatedAt: getNowMoment() });
       } else {
         const postLikeRef = postLikeDocs.docs[0].ref;
 
         tx.delete(postLikeRef);
-        tx.update(postRef, { likeCount: FieldValue.increment(-1) });
+        tx.update(postRef, { likeCount: FieldValue.increment(-1), updatedAt: getNowMoment() });
       }
     });
 

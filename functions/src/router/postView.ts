@@ -5,6 +5,7 @@ import db from "../modules/firestore";
 import { COLLECTIONS } from "../consts";
 import { getParentCollection } from "../utils/admin";
 import { accessAuthentication } from "../modules/token";
+import { getNowMoment } from "../utils";
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.get("/", accessAuthentication, async (req, res, next) => {
     const { id } = req.user;
 
     const postViewDocs = await db
-      .collection(COLLECTIONS.POST_VIEW)
+      .collectionGroup(COLLECTIONS.POST_VIEW)
       .where("userId", "==", id)
       .get();
 
@@ -53,22 +54,24 @@ router.post("/", accessAuthentication, async (req, res, next) => {
     const [post] = postDocs.docs;
     const postRef = post.ref;
 
-    const postViewDocs = await db
+    const postViewDocs = await postRef
       .collection(COLLECTIONS.POST_VIEW)
       .where("userId", "==", userId)
       .get();
 
     if (postViewDocs.empty) {
       await db.runTransaction(async (tx) => {
-        const postViewRef = db.collection(COLLECTIONS.POST_VIEW).doc();
+        const postViewRef = postRef.collection(COLLECTIONS.POST_VIEW).doc();
 
         tx.create(postViewRef, {
           post,
           user,
           postId,
-          userId
+          userId,
+          createdAt: getNowMoment(),
+          updatedAt: getNowMoment(),
         });
-        tx.update(postRef, { viewCount: FieldValue.increment(1) });
+        tx.update(postRef, { viewCount: FieldValue.increment(1), updatedAt: getNowMoment() });
       });
     }
 

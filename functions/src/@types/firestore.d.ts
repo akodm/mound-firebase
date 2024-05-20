@@ -165,6 +165,7 @@ export declare namespace MoundFirestore {
     postCommentId?: string;
     userId: string;
     postComment?: PostComment;
+    post: Post;
     user: User;
   }
 }

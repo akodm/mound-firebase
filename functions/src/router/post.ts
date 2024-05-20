@@ -176,7 +176,7 @@ router.post("/", accessAuthentication, async (req, res, next) => {
       throw { s: 400, m: "해당 장소는 존재하지 않습니다." };
     }
 
-    const post = await db
+    const postAdd = await db
       .collection(COLLECTIONS.POST)
       .add({
         title,
@@ -194,14 +194,14 @@ router.post("/", accessAuthentication, async (req, res, next) => {
         updatedAt: getNowMoment(),
       });
 
-    const postDoc = await post.get();
+    const postDoc = await postAdd.get();
 
     return res.status(200).send({
       result: true,
       message: "글을 생성하였습니다.",
       data: {
-        id: postDoc.id,
         ...postDoc.data(),
+        id: postDoc.id,
       },
       code: null,
     });
