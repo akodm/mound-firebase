@@ -14,6 +14,12 @@ export declare namespace MoundFirestore {
     isEupMyeonDong?: boolean;
   }
 
+  interface Placement {
+    siDo?: string;
+    siGuGun?: string;
+    eupMyeonDong?: string;
+  }
+
   interface Collections {
     USER: "user";
     TOKEN: "token";

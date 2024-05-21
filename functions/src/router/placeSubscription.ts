@@ -37,20 +37,26 @@ router.get("/", accessAuthentication, async (req, res, next) => {
 router.put("/", accessAuthentication, async (req, res, next) => {
   try {
     const { id: userId } = req.user;
-    const { siDo, siGuGun, eupMyeonDong } = req.body;
+    const { placements = [] } = req.body;
 
-    if (!siDo && !siGuGun && !eupMyeonDong) {
+    if (!placements?.length) {
       throw { s: 400, m: "장소에 대해 찾을 수 없습니다." };
     }
 
-    const placeList: MoundFirestore.PlaceStructor[] = EUPMYEONDONG.reduce((res: MoundFirestore.PlaceStructor[], crr) => {
-      const place = getPlace(crr, siDo, siGuGun, eupMyeonDong);
+    const placemantList: MoundFirestore.PlaceStructor[] = placements.reduce((res: MoundFirestore.PlaceStructor[], crr: MoundFirestore.Placement) => {
+      const { siDo = "", siGuGun = "", eupMyeonDong = "" } = crr;
 
-      if (place) {
-        res.push(place);
-      }
+      const placeList: MoundFirestore.PlaceStructor[] = EUPMYEONDONG.reduce((res: MoundFirestore.PlaceStructor[], crr) => {
+        const place = getPlace(crr, siDo, siGuGun, eupMyeonDong);
+  
+        if (place) {
+          res.push(place);
+        }
+  
+        return res;
+      }, []);
 
-      return res;
+      return res.concat(placeList);
     }, []);
 
     const placeSubscription = await db
@@ -61,7 +67,7 @@ router.put("/", accessAuthentication, async (req, res, next) => {
     const batch = db.batch();
 
     placeSubscription.docs.forEach((doc) => batch.delete(doc.ref));
-    placeList.forEach((place) => {
+    placemantList.forEach((place) => {
       const ref = db.collection(COLLECTIONS.PLACE_SUBSCRIPTION).doc();
 
       batch.set(ref, {
