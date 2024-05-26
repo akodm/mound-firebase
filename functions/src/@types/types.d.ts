@@ -63,3 +63,9 @@ export declare namespace TokenTypes {
     sub: "Access" | "Refresh";
   }
 }
+
+export declare namespace GlobalTypes {
+  interface EmptyJson {
+    [x: string]: any;
+  }
+}

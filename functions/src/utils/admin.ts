@@ -1,5 +1,9 @@
 import { NextFunction, Request, Response } from "express";
+import { FieldPath } from "firebase-admin/firestore";
 
+import db from "../modules/firestore";
+import { COLLECTIONS } from "../consts";
+import { GlobalTypes } from "../@types/types";
 import { MoundFirestore } from "../@types/firestore";
 
 const { TEST_CODE } = process.env;
@@ -88,11 +92,15 @@ export const getArrayChildProcessor = async (querySnapshot: FirebaseFirestore.Qu
     const processing = async (doc: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>): Promise<FirebaseFirestore.DocumentData> => {
       try {
         const json = await getChildCollections(doc.ref, ...args);
+        const docData = { ...doc.data(), id: doc.id } as GlobalTypes.EmptyJson;
+
+        if (docData.userId) {
+          docData.user = await getUserCollection(docData.userId);
+        }
 
         return {
-          ...doc.data(),
           ...json,
-          id: doc.id,
+          ...docData,
         };
       } catch (err) {
         throw err;
@@ -114,19 +122,34 @@ export const getParentCollection = async (querySnapshot: FirebaseFirestore.Query
 
     const processing = async (doc: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>): Promise<FirebaseFirestore.DocumentData> => {
       try {
-        const json = { ...doc.data(), id: doc.id };
-        const parent = await doc.ref.parent.get();
+        const json: GlobalTypes.EmptyJson = { ...doc.data(), id: doc.id };
+        const parent = await doc.ref.parent.parent?.get();
 
-        if (parent.empty) {
+        if (json.userId) {
+          json.user = await getUserCollection(json.userId);
+        }
+
+        if (!parent?.exists) {
           return {
             ...json,
             [key]: null,
           };
         }
 
+        const { userId, ...args } = parent.data() as GlobalTypes.EmptyJson;
+        const parentData = { ...args };
+
+        if (userId) {
+          parentData.userId = userId;
+          parentData.user = await getUserCollection(userId);
+        }
+
         return {
           ...json,
-          [key]: parent.docs.map((doc) => ({ ...doc.data(), id: doc.id, name: doc.ref.path })),
+          [key]: {
+            ...parentData,
+            id: parent.id,
+          },
         };
       } catch (err) {
         throw err;
@@ -134,6 +157,34 @@ export const getParentCollection = async (querySnapshot: FirebaseFirestore.Query
     }
 
     return await Promise.all(querySnapshot.docs.map(processing));
+  } catch (err) {
+    throw err;
+  }
+};
+
+// 사용자 아이디 기반 조회
+export const getUserCollection = async (id: string) => {
+  try {
+    const userDocs = await db
+      .collection(COLLECTIONS.USER)
+      .where(FieldPath.documentId(), "==", id)
+      .get();
+
+    if (userDocs.empty) {
+      return null;
+    }
+
+    const [user] = userDocs.docs;
+    const { nickname, reportCount, block, blockExpire, verify } = user.data();
+
+    return {
+      id,
+      nickname, 
+      reportCount,
+      block, 
+      blockExpire, 
+      verify,
+    };
   } catch (err) {
     throw err;
   }

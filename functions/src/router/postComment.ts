@@ -35,7 +35,7 @@ router.get("/", accessAuthentication, async (req, res, next) => {
 // 댓글 생성
 router.post("/", accessAuthentication, async (req, res, next) => {
   try {
-    const { id: userId, user } = req.user;
+    const { id: userId } = req.user;
     const {
       text,
       postId,
@@ -77,8 +77,6 @@ router.post("/", accessAuthentication, async (req, res, next) => {
       block: false,
       postId,
       userId,
-      post: { ...post.data() },
-      user,
       createdAt: getNowMoment(),
       updatedAt: getNowMoment(),
     };

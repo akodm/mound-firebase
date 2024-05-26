@@ -141,14 +141,6 @@ export const accessAuthentication = async (req: Request, res: Response, next: Ne
 
     req.user = {
       id: user.id,
-      user: {
-        id: user.id,
-        nickname: data.nickname,
-        verify: data.verify,
-        reportCount: data.reportCount,
-        block: data.block,
-        blockExpire: data.blockExpire,
-      },
     };
 
     return next();
@@ -157,7 +149,7 @@ export const accessAuthentication = async (req: Request, res: Response, next: Ne
       return next({ s: 401, m: "잘못된 토큰입니다.", c: ERROR_CODE.REQUEST_LOGIN });
     }
     if (err.name === TOKEN_ERROR_CODE.TOKEN_EXPIRED) {
-      throw { s: 403, m: "만료된 토큰입니다.", c: ERROR_CODE.REQUEST_REFRESH };
+      return next({ s: 403, m: "만료된 토큰입니다.", c: ERROR_CODE.REQUEST_REFRESH });
     }
 
     return next(err);
@@ -236,14 +228,6 @@ export const refreshAuthentication = async (req: Request, res: Response, next: N
 
     req.user = {
       id: user.id,
-      user: {
-        id: user.id,
-        nickname: data.nickname,
-        verify: data.verify,
-        reportCount: data.reportCount,
-        block: data.block,
-        blockExpire: data.blockExpire,
-      },
       access,
       refresh: result?.token,
     }
@@ -254,7 +238,7 @@ export const refreshAuthentication = async (req: Request, res: Response, next: N
       return next({ s: 401, m: "잘못된 토큰입니다.", c: ERROR_CODE.REQUEST_LOGIN });
     }
     if (err.name === TOKEN_ERROR_CODE.TOKEN_EXPIRED) {
-      throw { s: 401, m: "만료된 토큰입니다.", c: ERROR_CODE.REQUEST_LOGIN };
+      return next({ s: 401, m: "만료된 토큰입니다.", c: ERROR_CODE.REQUEST_LOGIN });
     }
 
     return next(err);

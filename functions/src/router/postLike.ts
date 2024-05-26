@@ -3,9 +3,9 @@ import { FieldPath, FieldValue } from "firebase-admin/firestore";
 
 import db from "../modules/firestore";
 import { COLLECTIONS } from "../consts";
-import { getParentCollection } from "../utils/admin";
-import { accessAuthentication } from "../modules/token";
 import { getNowMoment } from "../utils";
+import { accessAuthentication } from "../modules/token";
+import { getParentCollection } from "../utils/admin";
 
 const router = express.Router();
 
@@ -35,7 +35,7 @@ router.get("/", accessAuthentication, async (req, res, next) => {
 // 게시글 좋아요 처리
 router.put("/", accessAuthentication, async (req, res, next) => {
   try {
-    const { id: userId, user } = req.user;
+    const { id: userId } = req.user;
     const { id: postId } = req.body;
 
     if (!postId) {
@@ -64,8 +64,6 @@ router.put("/", accessAuthentication, async (req, res, next) => {
         const postLikeRef = postRef.collection(COLLECTIONS.POST_LIKE).doc();
 
         tx.create(postLikeRef, {
-          post,
-          user,
           postId,
           userId,
           createdAt: getNowMoment(),

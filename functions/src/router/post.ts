@@ -26,7 +26,7 @@ router.get("/", async (req, res, next) => {
     if (codeArray.length) {
       postDocs = await db
         .collection(COLLECTIONS.POST)
-        .where("code", "in", codeArray)
+        .where("place.code", "in", codeArray)
         .orderBy("updatedAt", "desc")
         .get();
     } else {
@@ -152,7 +152,7 @@ router.get("/:id", async (req, res, next) => {
 // 글 생성
 router.post("/", accessAuthentication, async (req, res, next) => {
   try {
-    const { id: userId, user } = req.user;
+    const { id: userId } = req.user;
     const {
       title = "",
       content,
@@ -190,7 +190,6 @@ router.post("/", accessAuthentication, async (req, res, next) => {
         reportCount: 0,
         block: false,
         place,
-        user,
         userId,
         createdAt: getNowMoment(),
         updatedAt: getNowMoment(),
