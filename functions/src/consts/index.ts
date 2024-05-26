@@ -17,3 +17,6 @@ export const COLLECTIONS: MoundFirestore.Collections = {
 };
 export const BEARER = "Bearer";
 export const NEAR_TOKEN_ISSUE_DAY = 7;
+export const REPORT_TYPES: MoundFirestore.ReportTypes[] = [
+  "advertisement", "belittle_location", "etc", "illegal_link", "swear",
+];

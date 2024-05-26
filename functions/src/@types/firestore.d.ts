@@ -3,6 +3,13 @@ export declare namespace MoundFirestore {
     [x: string]: any;
   }
 
+  type ReportTypes = 
+    "advertisement" | 
+    "swear" | 
+    "belittle_location" |
+    "illegal_link" |
+    "etc";
+
   interface GetChildCollections {
     name: string;
     relation: "one" | "many";
@@ -83,26 +90,29 @@ export declare namespace MoundFirestore {
   interface UserReport extends Constructor {
     text: string;
     reportType: string;
-    targetId: string;
+    targetId: ReportTypes;
     userId: string;
+    target: User;
     user: User;
   }
 
   interface PostReport extends Constructor {
     text: string;
-    reportType: string;
-    postId: string;
+    reportType: ReportTypes;
+    targetId: string;
     userId: string;
-    post: Post;
+    target: Post;
     user: User;
   }
 
   interface PostCommentReport extends Constructor {
     text: string;
-    reportType: string;
-    postCommentId: string;
+    reportType: ReportTypes;
+    targetId: string;
+    postId: string;
     userId: string;
-    postComment: PostComment;
+    target: PostComment;
+    post: Post;
     user: User;
   }
 
