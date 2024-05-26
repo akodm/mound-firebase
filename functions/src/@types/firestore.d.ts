@@ -6,6 +6,7 @@ export declare namespace MoundFirestore {
   interface GetChildCollections {
     name: string;
     relation: "one" | "many";
+    isUser?: boolean;
   }
 
   interface PlaceSearch {

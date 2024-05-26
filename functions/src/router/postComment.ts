@@ -9,17 +9,17 @@ import { getNowMoment } from "../utils";
 
 const router = express.Router();
 
-// 댓글 단 게시글 목록 조회
+// 댓글 내역 조회
 router.get("/", accessAuthentication, async (req, res, next) => {
   try {
     const { id } = req.user;
 
-    const postLikeDocs = await db
+    const postCommentDocs = await db
       .collectionGroup(COLLECTIONS.POST_COMMENT)
       .where("userId", "==", id)
       .get();
 
-    const data = await getParentCollection(postLikeDocs, COLLECTIONS.POST);
+    const data = await getParentCollection(postCommentDocs, COLLECTIONS.POST);
 
     return res.status(200).send({
       result: true,
@@ -59,7 +59,7 @@ router.post("/", accessAuthentication, async (req, res, next) => {
     }
 
     const [post] = postDocs.docs;
-    let postComment = null;
+    let isPostComment = false;
 
     if (postCommentId) {
       const postCommentDocs = await post.ref
@@ -67,8 +67,8 @@ router.post("/", accessAuthentication, async (req, res, next) => {
         .where(FieldPath.documentId(), "==", postCommentId)
         .get();
 
-      const [tempComment = null] = postCommentDocs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      postComment = tempComment;
+      const [tempComment = null] = postCommentDocs.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+      isPostComment = !!tempComment?.id;
     }
 
     const options: FirebaseFirestore.DocumentData = {
@@ -81,8 +81,7 @@ router.post("/", accessAuthentication, async (req, res, next) => {
       updatedAt: getNowMoment(),
     };
 
-    if (postCommentId && postComment?.id) {
-      options.postComment = { ...postComment };
+    if (postCommentId && isPostComment) {
       options.postCommentId = postCommentId;
     }
 
@@ -125,7 +124,6 @@ router.put("/", accessAuthentication, async (req, res, next) => {
 
     const postCommentDocs = await db
       .collectionGroup(COLLECTIONS.POST_COMMENT)
-      .where(FieldPath.documentId(), "==", postCommentId)
       .where("userId", "==", id)
       .get();
 
@@ -133,7 +131,13 @@ router.put("/", accessAuthentication, async (req, res, next) => {
       throw { s: 403, m: "댓글을 찾을 수 없습니다." };
     }
 
-    const [postComment] = postCommentDocs.docs;
+    const findPostCommentDocs = postCommentDocs.docs.find((doc) => doc.id === postCommentId);
+
+    if (!findPostCommentDocs?.id) {
+      throw { s: 403, m: "댓글을 찾을 수 없습니다." };
+    }
+
+    const postComment = findPostCommentDocs;
 
     await postComment.ref.update({ text, updatedAt: getNowMoment() });
 
@@ -160,7 +164,6 @@ router.delete("/:id", accessAuthentication, async (req, res, next) => {
 
     const postCommentDocs = await db
       .collectionGroup(COLLECTIONS.POST_COMMENT)
-      .where(FieldPath.documentId(), "==", postCommentId)
       .where("userId", "==", userId)
       .get();
 
@@ -168,9 +171,23 @@ router.delete("/:id", accessAuthentication, async (req, res, next) => {
       throw { s: 403, m: "댓글을 찾을 수 없습니다." };
     }
 
-    const [postComment] = postCommentDocs.docs;
+    const findPostCommentDocs = postCommentDocs.docs.find((doc) => doc.id === postCommentId);
 
-    await postComment.ref.delete();
+    if (!findPostCommentDocs?.id) {
+      throw { s: 403, m: "댓글을 찾을 수 없습니다." };
+    }
+
+    const post = await findPostCommentDocs.ref.parent.parent?.get();
+
+    await db.runTransaction(async (tx) => {
+      if (post?.id) {
+        const postRef = post.ref;
+
+        tx.update(postRef, { commentCount: FieldValue.increment(-1), updatedAt: getNowMoment() });
+      }
+
+      tx.delete(findPostCommentDocs.ref);
+    });
 
     return res.status(200).send({
       result: true,

@@ -123,10 +123,12 @@ router.get("/:id", async (req, res, next) => {
       {
         name: COLLECTIONS.POST_VIEW,
         relation: "many",
+        isUser: true,
       },
       {
         name: COLLECTIONS.POST_LIKE,
         relation: "many",
+        isUser: true,
       },
       {
         name: COLLECTIONS.POST_MEDIA,
@@ -135,6 +137,7 @@ router.get("/:id", async (req, res, next) => {
       {
         name: COLLECTIONS.POST_COMMENT,
         relation: "many",
+        isUser: true,
       },
     );
 

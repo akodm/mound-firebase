@@ -38,7 +38,7 @@ export const TestKeyInclude = async (req: Request, res: Response, next: NextFunc
 // 하위 컬렉션 조회 및 병합
 export const getChildCollections = async (ref: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>, ...args: MoundFirestore.GetChildCollections[]) => {
   try {
-    const json: any = {};
+    const json: GlobalTypes.EmptyJson = {};
 
     const getDocumentData = async (arg: MoundFirestore.GetChildCollections) => {
       const argDocs = await ref
@@ -56,19 +56,43 @@ export const getChildCollections = async (ref: FirebaseFirestore.DocumentReferen
       } else {
         switch (arg.relation) {
           case "one":
-            const [doc] = argDocs.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
-  
+            const [doc = null]: GlobalTypes.EmptyJson[] | null[] = argDocs.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+
             json[arg.name] = doc ? doc : null;
+
+            if (arg.isUser && json[arg.name]?.userId) {
+              const user = await getUserCollection(json[arg.name].userId);
+
+              if (user?.id) {
+                json[arg.name][COLLECTIONS.USER] = await getUserCollection(json[arg.name].userId);
+              }
+            }
+  
             break;
           case "many":
           default:
-            json[arg.name] = argDocs.docs.reduce((res: any[], crr) => {
+            json[arg.name] = argDocs.docs.reduce((res: GlobalTypes.EmptyJson, crr) => {
               if (crr?.id) {
                 res.push({ ...crr.data(), id: crr.id });
               }
   
               return res;
             }, []);
+
+            const getArrayUserCollection = async (jsonItem: GlobalTypes.EmptyJson) => {
+              if (jsonItem?.userId) {
+                const user = await getUserCollection(jsonItem.userId);
+
+                if (user?.id) {
+                  jsonItem[COLLECTIONS.USER] = await getUserCollection(jsonItem.userId);
+                }
+              }
+            };
+
+            if (arg.isUser) {
+              await Promise.all(json[arg.name].map(getArrayUserCollection));
+            }
+
             break;
         }
       }
