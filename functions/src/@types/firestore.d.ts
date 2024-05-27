@@ -137,7 +137,7 @@ export declare namespace MoundFirestore {
     userId: string;
   }
 
-  interface Post extends Constructor, PlaceStructor {
+  interface Post extends Constructor {
     title: string;
     content: string;
     exactly: boolean;
@@ -147,6 +147,7 @@ export declare namespace MoundFirestore {
     reportCount: number;
     block: boolean;
     userId: string;
+    place: PlaceStructor;
     user: User;
   }
 

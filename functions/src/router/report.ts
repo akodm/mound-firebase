@@ -1,13 +1,15 @@
 import express from "express";
+import { FieldPath, FieldValue } from "firebase-admin/firestore";
 
 import db from "../modules/firestore";
-import { accessAuthentication } from "../modules/token";
+import { getNowMoment } from "../utils";
+import { MoundFirestore } from "../@types/firestore";
 import { COLLECTIONS, REPORT_TYPES } from "../consts";
-import { FieldPath } from "firebase-admin/firestore";
+import { accessAuthentication } from "../modules/token";
 
 const router = express.Router();
 
-// 신고한 게시글 목록 조회
+// 신고한 사용자 목록 조회
 router.get("/user", accessAuthentication, async (req, res, next) => {
   try {
     const { id } = req.user;
@@ -21,7 +23,7 @@ router.get("/user", accessAuthentication, async (req, res, next) => {
 
     return res.status(200).send({
       result: true,
-      message: "",
+      message: "신고한 사용자 목록을 가져왔습니다.",
       data,
       code: null,
     });
@@ -44,7 +46,7 @@ router.get("/post", accessAuthentication, async (req, res, next) => {
 
     return res.status(200).send({
       result: true,
-      message: "",
+      message: "신고한 게시글 목록을 가져왔습니다.",
       data,
       code: null,
     });
@@ -67,7 +69,7 @@ router.get("/comment", accessAuthentication, async (req, res, next) => {
 
     return res.status(200).send({
       result: true,
-      message: "",
+      message: "신고한 댓글 목록을 가져왔습니다.",
       data,
       code: null,
     });
@@ -95,9 +97,9 @@ router.post("/user", accessAuthentication, async (req, res, next) => {
     if (!targetId) {
       throw { s: 400, m: "필수 값이 비어있습니다." };
     }
-    // if (id === targetId) {
-    //   throw { s: 403, m: "본인을 신고할 수 없습니다." };
-    // }
+    if (id === targetId) {
+      throw { s: 403, m: "본인을 신고할 수 없습니다." };
+    }
 
     const userRef = db
       .collection(COLLECTIONS.USER)
@@ -114,6 +116,26 @@ router.post("/user", accessAuthentication, async (req, res, next) => {
 
     const [target] = targetDocs.docs;
 
+    const targetReportDocs = await userRef
+      .collection(COLLECTIONS.USER_REPORT)
+      .where("targetId", "==", targetId)
+      .get();
+
+    if (!targetReportDocs.empty) {
+      throw { s: 403, m: "이미 신고한 사용자입니다." };
+    }
+
+    const {
+      nickname,
+      phone,
+      verify,
+      block,
+      blockExpire,
+      createdAt,
+      updatedAt,
+      reportCount,
+    } = target.data() as MoundFirestore.User;
+
     const userReportAdd = await userRef
       .collection(COLLECTIONS.USER_REPORT)
       .add({
@@ -121,14 +143,26 @@ router.post("/user", accessAuthentication, async (req, res, next) => {
         reportType,
         targetId,
         userId: id,
-        target: { ...target.data() },
+        target: {
+          nickname,
+          phone,
+          verify,
+          block,
+          blockExpire,
+          createdAt,
+          updatedAt,
+          reportCount,
+        },
+        createdAt: getNowMoment(),
+        updatedAt: getNowMoment(),
       });
+    await target.ref.update({ reportCount: FieldValue.increment(1), updatedAt: getNowMoment() });
 
     const userReportDoc = await userReportAdd.get();
 
     return res.status(200).send({
       result: true,
-      message: "",
+      message: "사용자를 신고했습니다.",
       data: {
         ...userReportDoc.data(),
         id: userReportDoc.id,
@@ -175,6 +209,21 @@ router.post("/post", accessAuthentication, async (req, res, next) => {
 
     const [target] = targetDocs.docs;
 
+    const targetReportDocs = await userRef
+      .collection(COLLECTIONS.POST_REPORT)
+      .where("targetId", "==", targetId)
+      .get();
+
+    if (!targetReportDocs.empty) {
+      throw { s: 403, m: "이미 신고한 게시글입니다." };
+    }
+
+    const { userId, ...other } = target.data() as MoundFirestore.Post;
+
+    if (id === userId) {
+      throw { s: 403, m: "본인 게시글을 신고할 수 없습니다." };
+    }
+
     const postReportAdd = await userRef
       .collection(COLLECTIONS.POST_REPORT)
       .add({
@@ -182,14 +231,17 @@ router.post("/post", accessAuthentication, async (req, res, next) => {
         reportType,
         targetId,
         userId: id,
-        target: { ...target.data() },
+        target: { ...other },
+        createdAt: getNowMoment(),
+        updatedAt: getNowMoment(),
       });
+    await target.ref.update({ reportCount: FieldValue.increment(1), updatedAt: getNowMoment() });
 
     const postReportDoc = await postReportAdd.get();
 
     return res.status(200).send({
       result: true,
-      message: "",
+      message: "게시글을 신고했습니다.",
       data: {
         ...postReportDoc.data(),
         id: postReportDoc.id,
@@ -241,12 +293,27 @@ router.post("/comment", accessAuthentication, async (req, res, next) => {
       .collection(COLLECTIONS.POST_COMMENT)
       .where(FieldPath.documentId(), "==", targetId)
       .get();
-    
+
     if (targetDocs.empty) {
-      throw { s: 403, m: "신고할 게시글을 찾을 수 없습니다." };
+      throw { s: 403, m: "신고할 댓글을 찾을 수 없습니다." };
     }
 
     const [target] = targetDocs.docs;
+
+    const targetReportDocs = await userRef
+      .collection(COLLECTIONS.POST_COMMENT_REPORT)
+      .where("targetId", "==", targetId)
+      .get();
+
+    if (!targetReportDocs.empty) {
+      throw { s: 403, m: "이미 신고한 댓글입니다." };
+    }
+
+    const { userId, ...other } = target.data() as MoundFirestore.PostComment;
+
+    if (id === userId) {
+      throw { s: 403, m: "본인 댓글을 신고할 수 없습니다." };
+    }
 
     const commentReportAdd = await userRef
       .collection(COLLECTIONS.POST_COMMENT_REPORT)
@@ -257,14 +324,17 @@ router.post("/comment", accessAuthentication, async (req, res, next) => {
         postId: post.id,
         userId: id,
         post: { ...post.data() },
-        target: { ...target.data() },
+        target: { userId, ...other },
+        createdAt: getNowMoment(),
+        updatedAt: getNowMoment(),
       });
+    await target.ref.update({ reportCount: FieldValue.increment(1), updatedAt: getNowMoment() });
 
     const commentReportDoc = await commentReportAdd.get();
 
     return res.status(200).send({
       result: true,
-      message: "",
+      message: "댓글을 신고했습니다.",
       data: {
         ...commentReportDoc.data(),
         id: commentReportDoc.id,

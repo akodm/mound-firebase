@@ -41,7 +41,7 @@ app.use("/", indexRouter);
 app.use(`/${ADMIN_URL}`, adminRouter);
 app.use("/user", userRouter);
 app.use("/token", tokenRouter);
-app.use("report/", reportRouter);
+app.use("/report", reportRouter);
 app.use("/place", placeRouter);
 app.use("/postView", postViewRouter);
 app.use("/postMedia", postMediaRouter);

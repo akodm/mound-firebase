@@ -176,7 +176,7 @@ router.post("/", async (req, res, next) => {
         blockExpire: null,
         notice: true,
         comment: true,
-        linke: true,
+        link: true,
         marketing: false,
         createdAt: getNowMoment(),
         updatedAt: getNowMoment(),

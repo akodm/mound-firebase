@@ -187,7 +187,7 @@ export const getParentCollection = async (querySnapshot: FirebaseFirestore.Query
 };
 
 // 사용자 아이디 기반 조회
-export const getUserCollection = async (id: string) => {
+export const getUserCollection = async (id: string): Promise<FirebaseFirestore.DocumentData | null> => {
   try {
     const userDocs = await db
       .collection(COLLECTIONS.USER)
