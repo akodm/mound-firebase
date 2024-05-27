@@ -6,7 +6,7 @@ export declare namespace MoundFirestore {
   type ReportTypes = 
     "advertisement" | 
     "swear" | 
-    "belittle_location" |
+    "location_belittle" |
     "illegal_link" |
     "etc";
 
