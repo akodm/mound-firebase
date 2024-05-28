@@ -83,12 +83,12 @@ router.post("/user", accessAuthentication, async (req, res, next) => {
   try {
     const { id } = req.user;
     const {
-      text,
+      text = "",
       reportType,
       targetId,
     } = req.body;
 
-    if (!text?.trim()) {
+    if (reportType as MoundFirestore.ReportTypes === "etc" && !text?.trim()) {
       throw { s: 400, m: "내용이 없습니다." };
     }
     if (!REPORT_TYPES.includes(reportType)) {
@@ -179,12 +179,12 @@ router.post("/post", accessAuthentication, async (req, res, next) => {
   try {
     const { id } = req.user;
     const {
-      text,
+      text = "",
       reportType,
       targetId,
     } = req.body;
 
-    if (!text?.trim()) {
+    if (reportType as MoundFirestore.ReportTypes === "etc" && !text?.trim()) {
       throw { s: 400, m: "내용이 없습니다." };
     }
     if (!REPORT_TYPES.includes(reportType)) {
@@ -258,13 +258,13 @@ router.post("/comment", accessAuthentication, async (req, res, next) => {
   try {
     const { id } = req.user;
     const {
-      text,
+      text = "",
       reportType,
       targetId,
       postId,
     } = req.body;
     
-    if (!text?.trim()) {
+    if (reportType as MoundFirestore.ReportTypes === "etc" && !text?.trim()) {
       throw { s: 400, m: "내용이 없습니다." };
     }
     if (!REPORT_TYPES.includes(reportType)) {
