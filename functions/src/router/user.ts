@@ -6,11 +6,48 @@ import db from "../modules/firestore";
 // import { phoneDelete } from "../modules/sms";
 import { accessAuthentication, accessIssue, refreshIssue } from "../modules/token";
 import { getNowMoment } from "../utils";
-import { COLLECTIONS } from "../consts";
+import { COLLECTIONS, PASSWORD_MAX_FAIL } from "../consts";
+import { ERROR_CODE } from "../consts/code";
+import { phoneVerify } from "../modules/sms";
+import { MoundFirestore } from "../@types/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 
 const { PASSWORD_HASH_ALGORITHM } = process.env;
 
 const router = express.Router();
+
+// 사용자 인증 번호 요청
+router.get("/phone", async (req, res, next) => {
+  try {
+    const { phone } = req.query;
+
+    if (!phone || typeof phone !== "string" || !phone.trim()) {
+      throw { s: 400, m: "전화번호가 없거나 잘못되었습니다." };
+    }
+
+    const userRecord = await phoneVerify(phone);
+
+    if (!userRecord?.uid) {
+      throw { s: 401, m: "사용자를 찾을 수 없습니다.", c: ERROR_CODE.REQUEST_LOGIN };
+    }
+
+    /**
+     * TODO: 
+     * 1. DB 에 전화번호와 인증 보낸 번호 저장하기
+     * 2. 전화번호로 인증 번호 보내기
+     * 3. 해당 전화번호가 같은 디비 내 인증 번호로 인증했는지 여부 확인
+     */
+
+    return res.status(200).send({
+      result: true,
+      message: "인증번호를 요청하였습니다.",
+      data: true,
+      code: null,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
 
 // 사용자 로그인
 router.post("/login", async (req, res, next) => {
@@ -29,7 +66,6 @@ router.post("/login", async (req, res, next) => {
     const userDocs = await db
       .collection(COLLECTIONS.USER)
       .where("account", "==", account)
-      .where("password", "==", hash)
       .get();
 
     if (userDocs.empty) {
@@ -37,8 +73,20 @@ router.post("/login", async (req, res, next) => {
     }
 
     const [user] = userDocs.docs;
-    const userAgent = req.headers["user-agent"];
+    const { password: userPassword, failCount = 0 } = user.data() as MoundFirestore.User;
 
+    if (failCount >= PASSWORD_MAX_FAIL) {
+      throw { s: 403, m: `비밀번호 입력에 ${PASSWORD_MAX_FAIL}회 이상 실패하였습니다. 비밀번호를 재설정 해주세요.` };
+    }
+    if (userPassword !== hash) {
+      await user.ref.update({
+        failCount: FieldValue.increment(1),
+        updatedAt: getNowMoment(),
+      });
+      throw { s: 403, m: "사용자를 찾을 수 없습니다." };
+    }
+
+    const userAgent = req.headers["user-agent"];
     const { token: access, expire: accessExpire } = accessIssue({ id: user.id });
     const { token: refresh, expire: refreshExpire } = refreshIssue({ id: user.id });
 
@@ -50,19 +98,20 @@ router.post("/login", async (req, res, next) => {
 
     const [token] = tokenDocs.docs;
 
-    if (token) {
-      await token.ref.update({
-        fcm,
-        access,
-        accessExpire,
-        refresh,
-        refreshExpire,
-        updatedAt: getNowMoment(),
-      });
-    } else {
-      await db
-        .collection(COLLECTIONS.TOKEN)
-        .add({
+    await db.runTransaction(async (tx) => {
+      if (token) {
+        tx.update(token.ref, {
+          fcm,
+          access,
+          accessExpire,
+          refresh,
+          refreshExpire,
+          updatedAt: getNowMoment(),
+        });
+      } else {
+        const tokenRef = db.collection(COLLECTIONS.TOKEN).doc();
+
+        tx.create(tokenRef, {
           fcm,
           userAgent,
           access,
@@ -73,7 +122,13 @@ router.post("/login", async (req, res, next) => {
           createdAt: getNowMoment(),
           updatedAt: getNowMoment(),
         });
-    }
+      }
+
+      tx.update(user.ref, {
+        failCount: 0,
+        updatedAt: getNowMoment(),
+      });
+    });
 
     return res.status(200).send({
       result: true,
@@ -172,6 +227,7 @@ router.post("/", async (req, res, next) => {
         verify: true,
         termsToService,
         reportCount: 0,
+        failCount: 0,
         block: false,
         blockExpire: null,
         notice: true,

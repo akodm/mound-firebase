@@ -15,6 +15,9 @@ export const COLLECTIONS: MoundFirestore.Collections = {
   POST_MEDIA: "postMedia",
   POST_COMMENT: "postComment",
 };
+export const PASSWORD_MAX_FAIL = 5;
+export const IN_MAX = 30;
+export const NOT_IN_MAX = 10;
 export const BEARER = "Bearer";
 export const NEAR_TOKEN_ISSUE_DAY = 7;
 export const REPORT_TYPES: MoundFirestore.ReportTypes[] = [

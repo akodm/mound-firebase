@@ -69,6 +69,7 @@ export declare namespace MoundFirestore {
     verify: boolean;
     termsToService: boolean;
     reportCount: 0;
+    failCount: number;
     block: boolean;
     blockExpire: string | null;
     notice: boolean;
