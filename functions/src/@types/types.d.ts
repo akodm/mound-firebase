@@ -11,7 +11,7 @@ export declare namespace OpenAPITypes {
     addr_name: string;
     cd: string;
   }
-  
+
   interface LocationResult {
     id: string;
     result: LocationChild[];
@@ -23,6 +23,12 @@ export declare namespace OpenAPITypes {
     location: string;
     address: string;
     code: string;
+  }
+
+  interface LocationDetail {
+    siDo: string;
+    siGuGun: string;
+    eupMyeonDong: string;
   }
 
   interface GeocodeCoord {

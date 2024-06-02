@@ -1,12 +1,13 @@
 import express from "express";
-import { FieldPath } from "firebase-admin/firestore";
+import { FieldPath, Filter } from "firebase-admin/firestore";
 
 import db from "../modules/firestore";
 import { getNowMoment } from "../utils";
-import { COLLECTIONS } from "../consts";
+import { COLLECTIONS, IN_MAX } from "../consts";
 import { EUPMYEONDONG } from "../consts/eupMyeonDong";
 import { getArrayChildProcessor } from "../utils/admin";
 import { accessAuthentication } from "../modules/token";
+import { getParseLocation } from "../modules/place";
 
 const router = express.Router();
 
@@ -19,6 +20,9 @@ router.get("/", async (req, res, next) => {
 
     if (!Array.isArray(codeArray)) {
       throw { s: 400, m: "위치 구독이 잘못되었습니다." };
+    }
+    if (codeArray.length > IN_MAX) {
+      throw { s: 400, m: `최대 요청 가능한 위치 구독 지역은 ${IN_MAX}개입니다.` };
     }
 
     let postDocs = null;
@@ -34,6 +38,74 @@ router.get("/", async (req, res, next) => {
         .collection(COLLECTIONS.POST)
         .orderBy("createdAt", "desc")
         .get();
+    }
+
+    const data = await getArrayChildProcessor(
+      postDocs,
+      {
+        name: COLLECTIONS.POST_VIEW,
+        relation: "many",
+      },
+      {
+        name: COLLECTIONS.POST_LIKE,
+        relation: "many",
+      },
+      {
+        name: COLLECTIONS.POST_MEDIA,
+        relation: "many",
+      },
+      {
+        name: COLLECTIONS.POST_COMMENT,
+        relation: "many",
+      },
+    );
+
+    return res.status(200).send({
+      result: true,
+      message: "글 목록을 가져왔습니다.",
+      data,
+      code: null,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// 검색 기반 전체 글 목록 반환
+router.get("/search", async (req, res, next) => {
+  try {
+    const { text = "" } = req.query;
+
+    let postDocs: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData> | null = null;
+
+    if (text && typeof text !== "string") {
+      throw { s: 400, m: "값이 잘못되었습니다." };
+    }
+
+    if (!text?.trim()) {
+      postDocs = await db
+        .collection(COLLECTIONS.POST)
+        .orderBy("createdAt", "desc")
+        .get();
+    } else {
+      const split = text.split(" ").slice(0, IN_MAX);
+
+      postDocs = await db
+        .collection(COLLECTIONS.POST)
+        .where(Filter.or(
+          Filter.where("title", "in", split),
+          Filter.where("content", "in", split),
+          Filter.where("place.siDo", "in", split),
+          Filter.where("place.siGuGun", "in", split),
+          Filter.where("place.eupMyeonDong", "in", split),
+          Filter.where("place.location", "in", split),
+        ))
+        .orderBy("updatedAt", "desc")
+        .get();
+    }
+
+    if (!postDocs) {
+      throw { s: 500, m: "게시글을 불러오지 못했습니다." };
     }
 
     const data = await getArrayChildProcessor(
@@ -181,6 +253,8 @@ router.post("/", accessAuthentication, async (req, res, next) => {
       throw { s: 400, m: "해당 장소는 존재하지 않습니다." };
     }
 
+    const { siDo, siGuGun, eupMyeonDong } = getParseLocation(place);
+
     const postAdd = await db
       .collection(COLLECTIONS.POST)
       .add({
@@ -192,7 +266,12 @@ router.post("/", accessAuthentication, async (req, res, next) => {
         commentCount: 0,
         reportCount: 0,
         block: false,
-        place,
+        place: {
+          ...place,
+          siDo, 
+          siGuGun, 
+          eupMyeonDong,
+        },
         userId,
         createdAt: getNowMoment(),
         updatedAt: getNowMoment(),

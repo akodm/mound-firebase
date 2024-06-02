@@ -7,7 +7,7 @@ const { KAKAO_GEOCODE_KEY } = process.env;
 // 위도 경도를 위치로 변환
 export const getGeocode = async ({ x, y }: OpenAPITypes.GeocodeCoord) => {
   try {
-    const { data } = await axios.get(`https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${x}&y=${y}`,{
+    const { data } = await axios.get(`https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${x}&y=${y}`, {
       headers: {
         Authorization: `KakaoAK ${KAKAO_GEOCODE_KEY}`,
         "Content-Type": 'application/json;charset=UTF-8'
@@ -24,12 +24,23 @@ export const getGeocode = async ({ x, y }: OpenAPITypes.GeocodeCoord) => {
   }
 };
 
-// 시도, 시구군, 읍면동 토대로 장소 데이터 찾기
-export const getPlace = (item: OpenAPITypes.LocationParse, ...args: string[]): MoundFirestore.PlaceStructor | null => {
-  const [siDo, siGuGun, eupMyeonDong] = args;
+// 장소 데이터에서 시도, 시구군, 읍면동 추출
+export const getParseLocation = (item: OpenAPITypes.LocationParse): OpenAPITypes.LocationDetail => {
   const [_sido, _sigugun, _subsigugun, _eupmyeondong] = item.location.split(" ");
   const tempSiGuGun = _eupmyeondong ? `${_sigugun} ${_subsigugun}` : _sigugun;
   const tempEupMyeonDong = _eupmyeondong ? _eupmyeondong : _subsigugun;
+
+  return {
+    siDo: _sido,
+    siGuGun: tempSiGuGun,
+    eupMyeonDong: tempEupMyeonDong,
+  };
+};
+
+// 시도, 시구군, 읍면동 토대로 장소 데이터 찾기
+export const getPlace = (item: OpenAPITypes.LocationParse, ...args: string[]): MoundFirestore.PlaceStructor | null => {
+  const [siDo, siGuGun, eupMyeonDong] = args;
+  const { siDo: _sido, siGuGun: tempSiGuGun, eupMyeonDong: tempEupMyeonDong } = getParseLocation(item);
   const options: MoundFirestore.PlaceSearch = {};
 
   if (siDo) {
