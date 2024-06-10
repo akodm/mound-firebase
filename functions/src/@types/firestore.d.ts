@@ -31,6 +31,7 @@ export declare namespace MoundFirestore {
   interface Collections {
     USER: "user";
     TOKEN: "token";
+    EMAIL_AUTH: "emailAuth",
     USER_REPORT: "userReport";
     POST_REPORT: "postReport";
     POST_COMMENT_REPORT: "postCommentReport";
@@ -65,6 +66,7 @@ export declare namespace MoundFirestore {
     account: string;
     nickname: string;
     password: string;
+    email: string;
     phone: string;
     verify: boolean;
     termsToService: boolean;
@@ -85,6 +87,14 @@ export declare namespace MoundFirestore {
     accessExpire: string;
     refresh: string;
     refreshExpire: string;
+    userId: string;
+  }
+
+  interface EmailAuth extends Constructor {
+    code: string;
+    verify: boolean;
+    expire: number;
+    log: string;
     userId: string;
   }
 

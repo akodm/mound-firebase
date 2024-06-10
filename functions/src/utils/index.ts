@@ -5,9 +5,9 @@ export const sleep = (delay: number): Promise<any> => new Promise((resolve) => s
 
 // 날짜 유효성 확인
 export const expireValidation = (
-  date: string | Date, 
-  granularity: moment.unitOfTime.StartOf = "minutes", 
-  near?: number, 
+  date: string | Date,
+  granularity: moment.unitOfTime.StartOf = "minutes",
+  near?: number,
   nearGranularity?: moment.unitOfTime.DurationConstructor,
 ): boolean => {
   const parse = moment().isAfter(moment(date), granularity);
@@ -34,4 +34,17 @@ export const parseDateToExpiresAt = (date: Date): number => {
 // 현재 시각 반환
 export const getNowMoment = (format: string = "YYYY-MM-DD HH:mm:ss") => {
   return moment().format(format);
+};
+
+// 랜덤 문자열 생성
+export const generateRandomString = (length: number) => {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  const charactersLength = characters.length;
+
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+
+  return result;
 };

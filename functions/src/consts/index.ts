@@ -2,6 +2,7 @@ import { MoundFirestore } from "../@types/firestore";
 
 export const COLLECTIONS: MoundFirestore.Collections = {
   USER: "user",
+  EMAIL_AUTH: "emailAuth",
   TOKEN: "token",
   USER_REPORT: "userReport",
   POST_REPORT: "postReport",

@@ -1,47 +1,147 @@
 import express from "express";
 import crypto from "crypto";
+import { logger } from "firebase-functions/v1";
+import { FieldValue } from "firebase-admin/firestore";
+import moment from "moment";
 
 import db from "../modules/firestore";
-// import { MoundFirestore } from "../@types/firestore";
-// import { phoneDelete } from "../modules/sms";
-import { accessAuthentication, accessIssue, refreshIssue } from "../modules/token";
-import { getNowMoment } from "../utils";
+import { expireValidation, generateRandomString, getNowMoment, parseExpireToDateAt } from "../utils";
+import { sendEmail } from "../modules/nodemailer";
+import { MoundFirestore } from "../@types/firestore";
+import { authCodeByEmailConfig } from "../utils/auth";
 import { COLLECTIONS, PASSWORD_MAX_FAIL } from "../consts";
 import { ERROR_CODE } from "../consts/code";
-import { phoneVerify } from "../modules/sms";
-import { MoundFirestore } from "../@types/firestore";
-import { FieldValue } from "firebase-admin/firestore";
+import { phoneVerify, phoneDelete } from "../modules/auth";
+import { accessAuthentication, accessIssue, refreshIssue } from "../modules/token";
 
 const { PASSWORD_HASH_ALGORITHM } = process.env;
 
 const router = express.Router();
 
-// 사용자 인증 번호 요청
-router.get("/phone", async (req, res, next) => {
+// 사용자 계정 찾기 코드 요청
+router.get("/account/code", async (req, res, next) => {
   try {
-    const { phone } = req.query;
+    const { phone, email } = req.query;
 
-    if (!phone || typeof phone !== "string" || !phone.trim()) {
-      throw { s: 400, m: "전화번호가 없거나 잘못되었습니다." };
+    if (typeof phone !== "string" || typeof email !== "string") {
+      throw { s: 400, m: "잘못된 요청입니다." };
+    }
+    if (!phone?.trim() || !email?.trim()) {
+      throw { s: 400, m: "필수 값이 비어있습니다." };
     }
 
-    const userRecord = await phoneVerify(phone);
+    const userDocs = await db
+      .collection(COLLECTIONS.USER)
+      .where("phone", "==", `+${phone}`)
+      .where("email", "==", email)
+      .get();
 
-    if (!userRecord?.uid) {
-      throw { s: 401, m: "사용자를 찾을 수 없습니다.", c: ERROR_CODE.REQUEST_LOGIN };
+    if (userDocs.empty) {
+      throw { s: 403, m: "사용자를 찾을 수 없습니다." };
     }
 
-    /**
-     * TODO: 
-     * 1. DB 에 전화번호와 인증 보낸 번호 저장하기
-     * 2. 전화번호로 인증 번호 보내기
-     * 3. 해당 전화번호가 같은 디비 내 인증 번호로 인증했는지 여부 확인
-     */
+    const [user] = userDocs.docs;
+    const code = generateRandomString(6);
+    const config = authCodeByEmailConfig(email, code);
+
+    await db
+      .collection(COLLECTIONS.EMAIL_AUTH)
+      .add({
+        code,
+        verify: false,
+        expire: moment().add(3, "minute").unix(),
+        log: config.html,
+        userId: user.id,
+        createdAt: getNowMoment(),
+        updatedAt: getNowMoment(),
+      });
+
+    const info = await sendEmail({ ...config });
+
+    if (!info.accepted.includes(email)) {
+      logger.log(`이메일 인증 오류: ${JSON.stringify({ info })}`);
+      throw { s: 403, m: "이메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요." };
+    }
 
     return res.status(200).send({
       result: true,
-      message: "인증번호를 요청하였습니다.",
+      message: "인증 이메일을 전송하였습니다.",
       data: true,
+      code: null,
+    })
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// 사용자 계정 찾기 코드 인증
+router.get("/account/auth", async (req, res, next) => {
+  try {
+    const { email, phone, code } = req.query;
+
+    if (
+      typeof phone !== "string" ||
+      typeof email !== "string" ||
+      typeof code !== "string"
+    ) {
+      throw { s: 400, m: "잘못된 요청입니다." };
+    }
+    if (
+      !phone?.trim() ||
+      !email?.trim() ||
+      !code?.trim()
+    ) {
+      throw { s: 400, m: "필수 값이 비어있습니다." };
+    }
+
+    const emailAuthDocs = await db
+      .collection(COLLECTIONS.EMAIL_AUTH)
+      .where("code", "==", code)
+      .get();
+
+    if (emailAuthDocs.empty) {
+      throw { s: 403, m: "코드가 잘못되었습니다." };
+    }
+
+    const [emailAuth] = emailAuthDocs.docs;
+    const { verify, expire, userId } = emailAuth.data() as MoundFirestore.EmailAuth;
+    const date = parseExpireToDateAt(expire);
+
+    if (verify) {
+      throw { s: 403, m: "해당 인증 코드를 사용할 수 없습니다." };
+    }
+    if (expireValidation(date, "second")) {
+      throw { s: 403, m: "만료된 인증 코드입니다." };
+    }
+
+    const userDocs = await db
+      .collection(COLLECTIONS.USER)
+      .where("phone", "==", `+${phone}`)
+      .where("email", "==", email)
+      .get();
+
+    if (userDocs.empty) {
+      throw { s: 403, m: "사용자를 찾을 수 없습니다." };
+    }
+
+    const [user] = userDocs.docs;
+    const { account } = user.data() as MoundFirestore.User;
+
+    if (user.id !== userId) {
+      throw { s: 403, m: "잘못된 인증 요청입니다." };
+    }
+
+    await emailAuth.ref.update({
+      verify: true,
+      updatedAt: getNowMoment(),
+    });
+
+    return res.status(200).send({
+      result: true,
+      message: "인증에 성공하였습니다.",
+      data: {
+        account,
+      },
       code: null,
     });
   } catch (err) {
@@ -181,6 +281,7 @@ router.post("/", async (req, res, next) => {
       account,
       nickname = "",
       password,
+      email,
       fcm,
       phone,
       termsToService = false,
@@ -189,6 +290,7 @@ router.post("/", async (req, res, next) => {
     if (
       !account?.trim() ||
       !password?.trim() ||
+      !email?.trim() ||
       !fcm?.trim() ||
       !phone?.trim() ||
       !termsToService
@@ -223,6 +325,7 @@ router.post("/", async (req, res, next) => {
         account,
         nickname,
         password: hash,
+        email,
         phone,
         verify: true,
         termsToService,
