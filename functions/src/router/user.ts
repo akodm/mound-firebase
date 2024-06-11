@@ -149,6 +149,227 @@ router.get("/account/auth", async (req, res, next) => {
   }
 });
 
+// 사용자 비밀번호 재설정 코드 요청
+router.get("/password/code", async (req, res, next) => {
+  try {
+    const { account, phone, email } = req.query;
+
+    if (
+      typeof account !== "string" ||
+      typeof phone !== "string" ||
+      typeof email !== "string"
+    ) {
+      throw { s: 400, m: "잘못된 요청입니다." };
+    }
+    if (
+      !account?.trim() ||
+      !phone?.trim() ||
+      !email?.trim()
+    ) {
+      throw { s: 400, m: "필수 값이 비어있습니다." };
+    }
+
+    const userDocs = await db
+      .collection(COLLECTIONS.USER)
+      .where("account", "==", account)
+      .where("phone", "==", `+${phone}`)
+      .where("email", "==", email)
+      .get();
+
+    if (userDocs.empty) {
+      throw { s: 403, m: "사용자를 찾을 수 없습니다." };
+    }
+
+    const [user] = userDocs.docs;
+    const code = generateRandomString(6);
+    const config = authCodeByEmailConfig(email, code);
+
+    await db
+      .collection(COLLECTIONS.EMAIL_AUTH)
+      .add({
+        code,
+        verify: false,
+        expire: moment().add(3, "minute").unix(),
+        log: config.html,
+        userId: user.id,
+        createdAt: getNowMoment(),
+        updatedAt: getNowMoment(),
+      });
+
+    const info = await sendEmail({ ...config });
+
+    if (!info.accepted.includes(email)) {
+      logger.log(`이메일 인증 오류: ${JSON.stringify({ info })}`);
+      throw { s: 403, m: "이메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요." };
+    }
+
+    return res.status(200).send({
+      result: true,
+      message: "인증 이메일을 전송하였습니다.",
+      data: true,
+      code: null,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// 사용자 비밀번호 재설정 코드 인증
+router.get("/password/auth", async (req, res, next) => {
+  try {
+    const { account, phone, email, code, fcm } = req.query;
+
+    if (
+      typeof account !== "string" ||
+      typeof phone !== "string" ||
+      typeof email !== "string" ||
+      typeof code !== "string"
+    ) {
+      throw { s: 400, m: "잘못된 요청입니다." };
+    }
+    if (
+      !account?.trim() ||
+      !phone?.trim() ||
+      !email?.trim() ||
+      !code?.trim()
+    ) {
+      throw { s: 400, m: "필수 값이 비어있습니다." };
+    }
+
+    const emailAuthDocs = await db
+      .collection(COLLECTIONS.EMAIL_AUTH)
+      .where("code", "==", code)
+      .get();
+
+    if (emailAuthDocs.empty) {
+      throw { s: 403, m: "코드가 잘못되었습니다." };
+    }
+
+    const [emailAuth] = emailAuthDocs.docs;
+    const { verify, expire, userId } = emailAuth.data() as MoundFirestore.EmailAuth;
+    const date = parseExpireToDateAt(expire);
+
+    if (verify) {
+      throw { s: 403, m: "해당 인증 코드를 사용할 수 없습니다." };
+    }
+    if (expireValidation(date, "second")) {
+      throw { s: 403, m: "만료된 인증 코드입니다." };
+    }
+
+    const userDocs = await db
+      .collection(COLLECTIONS.USER)
+      .where("account", "==", account)
+      .where("phone", "==", `+${phone}`)
+      .where("email", "==", email)
+      .get();
+
+    if (userDocs.empty) {
+      throw { s: 403, m: "사용자를 찾을 수 없습니다." };
+    }
+
+    const [user] = userDocs.docs;
+
+    if (user.id !== userId) {
+      throw { s: 403, m: "잘못된 인증 요청입니다." };
+    }
+
+    await emailAuth.ref.update({
+      verify: true,
+      updatedAt: getNowMoment(),
+    });
+
+    const userAgent = req.headers["user-agent"];
+    const { token: access, expire: accessExpire } = accessIssue({ id: user.id });
+    const { token: refresh, expire: refreshExpire } = refreshIssue({ id: user.id });
+
+    const tokenDocs = await db
+      .collection(COLLECTIONS.TOKEN)
+      .where("userId", "==", user.id)
+      .where("userAgent", "==", userAgent)
+      .get();
+
+    const [token] = tokenDocs.docs;
+
+    await db.runTransaction(async (tx) => {
+      if (token) {
+        tx.update(token.ref, {
+          fcm,
+          access,
+          accessExpire,
+          refresh,
+          refreshExpire,
+          updatedAt: getNowMoment(),
+        });
+      } else {
+        const tokenRef = db.collection(COLLECTIONS.TOKEN).doc();
+
+        tx.create(tokenRef, {
+          fcm,
+          userAgent,
+          access,
+          accessExpire,
+          refresh,
+          refreshExpire,
+          userId: user.id,
+          createdAt: getNowMoment(),
+          updatedAt: getNowMoment(),
+        });
+      }
+
+      tx.update(user.ref, {
+        failCount: 0,
+        updatedAt: getNowMoment(),
+      });
+    });
+
+    return res.status(200).send({
+      result: true,
+      message: "인증에 성공하였습니다.",
+      data: true,
+      access,
+      refresh,
+      code: null,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// 사용자 비밀번호 재설정
+router.post("/password", accessAuthentication, async (req, res, next) => {
+  try {
+    const { id } = req.user;
+    const { password } = req.body;
+
+    if (!password?.trim()) {
+      throw { s: 400, m: "필수 값이 비어있습니다." };
+    }
+
+    const hash = crypto
+      .createHash(PASSWORD_HASH_ALGORITHM as string)
+      .update(password)
+      .digest("hex");
+
+    const userDoc = db
+      .collection(COLLECTIONS.USER)
+      .doc(id);
+
+    await userDoc.update({
+      password: hash,
+      updatedAt: getNowMoment(),
+    });
+
+    return res.status(200).send({
+      result: true,
+      message: "비밀번호가 재설정 되었습니다. 다시 로그인하여 주세요.",
+      data: true,
+      code: ERROR_CODE.REQUEST_LOGIN,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 // 사용자 로그인
 router.post("/login", async (req, res, next) => {
   try {

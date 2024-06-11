@@ -66,7 +66,7 @@ export declare namespace TokenTypes {
   interface JwtObject extends Payload {
     iat: number;
     exp: number;
-    sub: "Access" | "Refresh";
+    sub: "Access" | "Refresh" | "Auth";
   }
 }
 
