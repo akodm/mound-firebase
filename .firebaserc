@@ -1,5 +1,9 @@
 {
   "projects": {
-    "default": "mound-ad8f1"
-  }
+    "default": "mound-ad8f1",
+    "mound": "mound-ad8f1",
+    "mound-dev": "mound-ad8f1"
+  },
+  "targets": {},
+  "etags": {}
 }

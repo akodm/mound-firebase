@@ -8,4 +8,7 @@ firebase deploy
 # Start App
 firebase emulators:start # --only functions
 
+# ENV
+firebase use [mound | mound-dev]
+firebase deploy --only functions # prod | dev
 ```
