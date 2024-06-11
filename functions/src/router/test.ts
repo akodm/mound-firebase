@@ -1,8 +1,8 @@
 import express from "express";
 
 import { TestKeyInclude } from "../utils/admin";
+import { sendEmail } from "../modules/nodemailer";
 import { accessAuthentication, accessIssue, refreshAuthentication, refreshIssue } from "../modules/token";
-import { getTransporter, sendEmail } from "../modules/nodemailer";
 
 const router = express.Router();
 
