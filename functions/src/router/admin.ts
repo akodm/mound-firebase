@@ -1,13 +1,17 @@
 import express from "express";
+import { testKeyInclude } from "../utils/admin";
 
 const router = express.Router();
 
-router.get("/", (req, res, next) => {
+// 환경변수 확인
+router.get("/env", testKeyInclude, (req, res, next) => {
   try {
     return res.status(200).send({
       result: true,
       message: "",
-      data: null,
+      data: {
+        env: process.env.NODE_ENV,
+      },
       code: null,
     });
   } catch (err) {
