@@ -281,7 +281,7 @@ export const refreshAuthentication = async (req: Request, res: Response, next: N
   }
 };
 
-// Access Token 인증
+// Auth Token 인증
 export const authAuthentication = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const auth = req.headers?.authorization;
@@ -296,7 +296,7 @@ export const authAuthentication = async (req: Request, res: Response, next: Next
       throw { s: 403, m: "인증 요청이 잘못되었습니다." };
     }
 
-    const object = await accessVerify(value) as TokenTypes.JwtObject | undefined;
+    const object = await authVerify(value) as TokenTypes.JwtObject | undefined;
 
     if (!object?.id || object.sub !== "Auth") {
       throw { s: 403, m: "잘못된 인증 토큰입니다." };

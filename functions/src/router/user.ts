@@ -11,8 +11,8 @@ import { MoundFirestore } from "../@types/firestore";
 import { authCodeByEmailConfig } from "../utils/auth";
 import { COLLECTIONS, PASSWORD_MAX_FAIL } from "../consts";
 import { ERROR_CODE } from "../consts/code";
-import { phoneVerify, phoneDelete } from "../modules/auth";
-import { accessAuthentication, accessIssue, refreshIssue } from "../modules/token";
+// import { phoneVerify, phoneDelete } from "../modules/auth";
+import { accessAuthentication, accessIssue, authAuthentication, refreshIssue } from "../modules/token";
 
 const { PASSWORD_HASH_ALGORITHM } = process.env;
 
@@ -336,7 +336,7 @@ router.get("/password/auth", async (req, res, next) => {
 });
 
 // 사용자 비밀번호 재설정
-router.post("/password", accessAuthentication, async (req, res, next) => {
+router.post("/password", authAuthentication, async (req, res, next) => {
   try {
     const { id } = req.user;
     const { password } = req.body;
